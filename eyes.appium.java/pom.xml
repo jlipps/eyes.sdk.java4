@@ -3,11 +3,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>eyes-selenium-java4</artifactId>
-    <name>eyes-selenium-java4</name>
+    <artifactId>eyes-appium-java4</artifactId>
+    <name>eyes-appium-java4</name>
     <url>http://www.applitools.com</url>
 
-    <description>Applitools Eyes SDK for Selenium Java WebDriver</description>
+    <description>Applitools Eyes SDK for Appium Java WebDriver</description>
 
     <parent>
         <groupId>com.applitools</groupId>
@@ -28,9 +28,19 @@
             <version>4.1</version>
         </dependency>
         <dependency>
+            <groupId>com.applitools</groupId>
+            <artifactId>eyes-selenium-java4</artifactId>
+            <version>4.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>(,4.0)</version>
+        </dependency>
+        <dependency>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+            <version>[5.0.1, 6.0)</version>
         </dependency>
     </dependencies>
 </project>

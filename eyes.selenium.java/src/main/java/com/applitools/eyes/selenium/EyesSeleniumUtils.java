@@ -8,13 +8,9 @@ import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.GeneralUtils;
-import io.appium.java_client.AppiumDriver;
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.ios.IOSDriver;
-import io.appium.java_client.remote.MobileCapabilityType;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.internal.Coordinates;
-
+import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,53 +120,52 @@ public class EyesSeleniumUtils {
         return driver;
     }
 
-    /**
-     *
-     * @param driver The driver for which to check if it represents a mobile
-     *               device.
-     * @return {@code true} if the platform running the test is a mobile
-     * platform. {@code false} otherwise.
-     */
-    public static boolean isMobileDevice(WebDriver driver) {
-        driver = getUnderlyingDriver(driver);
-        return driver instanceof AppiumDriver;
-    }
-
-    /**
-     * @param driver The driver for which to check the orientation.
-     * @return {@code true} if this is a mobile device and is in landscape
-     * orientation. {@code false} otherwise.
-     */
-    public static boolean isLandscapeOrientation(WebDriver driver) {
-        // We can only find orientation for mobile devices.
-        if (isMobileDevice(driver)) {
-            AppiumDriver<?> appiumDriver = (AppiumDriver<?>) getUnderlyingDriver(driver);
-
-            String originalContext = null;
-            try {
-                // We must be in native context in order to ask for orientation,
-                // because of an Appium bug.
-                originalContext = appiumDriver.getContext();
-                if (appiumDriver.getContextHandles().size() > 1 &&
-                        !originalContext.equalsIgnoreCase(NATIVE_APP)) {
-                    appiumDriver.context(NATIVE_APP);
-                } else {
-                    originalContext = null;
-                }
-                ScreenOrientation orientation = appiumDriver.getOrientation();
-                return orientation == ScreenOrientation.LANDSCAPE;
-            } catch (Exception e) {
-                throw new EyesDriverOperationException(
-                        "Failed to get orientation!", e);
-            }
-            finally {
-                if (originalContext != null) {
-                    appiumDriver.context(originalContext);
+    private static ImageOrientationHandler imageOrientationHandlerHandler = new ImageOrientationHandler() {
+        @Override
+        public boolean isLandscapeOrientation(WebDriver driver) {
+            if (driver instanceof Rotatable) {
+                Rotatable rotatable = (Rotatable) driver;
+                try {
+                    ScreenOrientation orientation = rotatable.getOrientation();
+                    return orientation == ScreenOrientation.LANDSCAPE;
+                } catch (Exception e) {
+                    throw new EyesDriverOperationException("Failed to get orientation!", e);
                 }
             }
+            return false;
         }
 
-        return false;
+        @Override
+        public int tryAutomaticRotation(Logger logger, WebDriver driver, BufferedImage image) {
+            return 0;
+        }
+    };
+
+    public static void setImageOrientationHandlerHandler(ImageOrientationHandler imageOrientationHandler) {
+        imageOrientationHandlerHandler = imageOrientationHandler;
+    }
+
+    public static boolean isLandscapeOrientation(WebDriver driver) {
+        return imageOrientationHandlerHandler.isLandscapeOrientation(driver);
+    }
+
+    public static int tryAutomaticRotation(Logger logger, WebDriver driver, BufferedImage image){
+        return imageOrientationHandlerHandler.tryAutomaticRotation(logger, driver, image);
+    }
+
+    private static JavascriptHandler javascriptHandler = new JavascriptHandler() {
+        @Override
+        public void handle(String script, Object[] args) {
+            // do nothing
+        }
+    };
+
+    public static void setJavascriptHandler(JavascriptHandler handler) {
+        javascriptHandler = handler;
+    }
+
+    public static void handleSpecialCommands(String script, Object[] args) {
+        javascriptHandler.handle(script, args);
     }
 
     /**
@@ -467,43 +462,6 @@ public class EyesSeleniumUtils {
         }
 
         throw new EyesException("Failed to set viewport size!");
-    }
-
-    /**
-     *
-     * @param driver The driver to test.
-     * @return {@code true} if the driver is an Android driver.
-     * {@code false} otherwise.
-     */
-    public static boolean isAndroid(WebDriver driver) {
-        driver = getUnderlyingDriver(driver);
-        return driver instanceof AndroidDriver;
-    }
-
-    /**
-     *
-     * @param driver The driver to test.
-     * @return {@code true} if the driver is an iOS driver.
-     * {@code false} otherwise.
-     */
-    public static boolean isIOS(WebDriver driver) {
-        driver = getUnderlyingDriver(driver);
-        return driver instanceof IOSDriver;
-    }
-
-    /**
-     *
-     * @param driver The driver to get the platform version from.
-     * @return The platform version or {@code null} if it is undefined.
-     */
-    public static String getPlatformVersion(HasCapabilities driver) {
-        Capabilities capabilities = driver.getCapabilities();
-        Object platformVersionObj =
-                capabilities.getCapability
-                        (MobileCapabilityType.PLATFORM_VERSION);
-
-        return platformVersionObj == null ?
-                null : String.valueOf(platformVersionObj);
     }
 
     /**
