@@ -34,78 +34,8 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     private void init() {
-        EyesSeleniumUtils.setImageOrientationHandlerHandler(new ImageOrientationHandler() {
-            @Override
-            public boolean isLandscapeOrientation(WebDriver driver) {
-                // We can only find orientation for mobile devices.
-                if (EyesAppiumUtils.isMobileDevice(driver)) {
-                    AppiumDriver<?> appiumDriver = (AppiumDriver<?>) getUnderlyingDriver(driver);
-
-                    String originalContext = null;
-                    try {
-                        // We must be in native context in order to ask for orientation,
-                        // because of an Appium bug.
-                        originalContext = appiumDriver.getContext();
-                        if (appiumDriver.getContextHandles().size() > 1 &&
-                                !originalContext.equalsIgnoreCase(NATIVE_APP)) {
-                            appiumDriver.context(NATIVE_APP);
-                        } else {
-                            originalContext = null;
-                        }
-                        ScreenOrientation orientation = appiumDriver.getOrientation();
-                        return orientation == ScreenOrientation.LANDSCAPE;
-                    } catch (Exception e) {
-                        throw new EyesDriverOperationException("Failed to get orientation!", e);
-                    } finally {
-                        if (originalContext != null) {
-                            appiumDriver.context(originalContext);
-                        }
-                    }
-                }
-
-                return false;
-            }
-
-            @Override
-            public int tryAutomaticRotation(Logger logger, WebDriver driver, BufferedImage image) {
-                ArgumentGuard.notNull(logger, "logger");
-                int degrees = 0;
-                try {
-                    logger.verbose("Trying to automatically normalize rotation...");
-                    if (EyesAppiumUtils.isMobileDevice(driver) &&
-                            EyesSeleniumUtils.isLandscapeOrientation(driver)
-                            && image.getHeight() > image.getWidth()) {
-                        // For Android, we need to rotate images to the right, and
-                        // for iOS to the left.
-                        degrees = EyesAppiumUtils.isAndroid(driver) ? 90 : -90;
-                    }
-                } catch (Exception e) {
-                    logger.verbose("Got exception: " + e.getMessage());
-                    logger.verbose("Skipped automatic rotation handling.");
-                }
-                return degrees;
-            }
-        });
-
-        EyesSeleniumUtils.setJavascriptHandler(new JavascriptHandler() {
-            @Override
-            public void handle(String script, Object[] args) {
-                // Appium commands are sometimes sent as Javascript
-                if (AppiumJsCommandExtractor.isAppiumJsCommand(script)) {
-                    Trigger trigger =
-                            AppiumJsCommandExtractor.extractTrigger(driver.getElementIds(),
-                                    driver.manage().window().getSize(), script, args);
-
-                    if (trigger != null) {
-                        // TODO - Daniel, additional type of triggers
-                        if (trigger instanceof MouseTrigger) {
-                            MouseTrigger mt = (MouseTrigger) trigger;
-                            addMouseTrigger(mt.getMouseAction(), mt.getControl(), mt.getLocation());
-                        }
-                    }
-                }
-            }
-        });
+        EyesSeleniumUtils.setImageOrientationHandlerHandler(new AppiumImageOrientationHandler());
+        EyesSeleniumUtils.setJavascriptHandler(new AppiumJavascriptHandler(this.driver));
     }
 
     protected ScaleProviderFactory getScaleProviderFactory() {
@@ -162,50 +92,4 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         logger.log("Done!");
         return appEnv;
     }
-
-    /**
-     * Rotates the image as necessary. The rotation is either manually forced
-     * by passing a non-null ImageRotation, or automatically inferred.
-     * @param driver   The underlying driver which produced the screenshot.
-     * @param image    The image to normalize.
-     * @param rotation The degrees by which to rotate the image:
-     *                 positive values = clockwise rotation,
-     *                 negative values = counter-clockwise,
-     *                 0 = force no rotation, null = rotate automatically
-     *                 when needed.
-     * @return A normalized image.
-     */
-    public static BufferedImage normalizeRotation(Logger logger,
-                                                  WebDriver driver,
-                                                  BufferedImage image,
-                                                  ImageRotation rotation) {
-        ArgumentGuard.notNull(driver, "driver");
-        ArgumentGuard.notNull(image, "image");
-        BufferedImage normalizedImage = image;
-        if (rotation != null) {
-            if (rotation.getRotation() != 0) {
-                normalizedImage = ImageUtils.rotateImage(image,
-                        rotation.getRotation());
-            }
-        } else { // Do automatic rotation if necessary
-            try {
-                logger.verbose("Trying to automatically normalize rotation...");
-                if (EyesAppiumUtils.isMobileDevice(driver) &&
-                        EyesSeleniumUtils.isLandscapeOrientation(driver)
-                        && image.getHeight() > image.getWidth()) {
-                    // For Android, we need to rotate images to the right, and
-                    // for iOS to the left.
-                    int degrees = EyesAppiumUtils.isAndroid(driver) ? 90 : -90;
-                    normalizedImage = ImageUtils.rotateImage(image, degrees);
-                }
-            } catch (Exception e) {
-                logger.verbose("Got exception: " + e.getMessage());
-                logger.verbose("Skipped automatic rotation handling.");
-            }
-        }
-
-        return normalizedImage;
-    }
-
-
 }
