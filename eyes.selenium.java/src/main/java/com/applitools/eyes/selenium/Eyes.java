@@ -1881,8 +1881,11 @@ public class Eyes extends EyesBase {
                         new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
             } else if (forceFullPageScreenshot) {
                 logger.verbose("Full page screenshot requested.");
+
                 // Save the current frame path.
-                FrameChain originalFrame = driver.getFrameChain();
+                FrameChain originalFrame = new FrameChain(logger, driver.getFrameChain());
+                Location originalFramePosition = originalFrame.size() > 0 ? originalFrame.getDefaultContentScrollPosition() : new Location(0,0);
+
                 driver.switchTo().defaultContent();
                 FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
                 BufferedImage fullPageImage = algo.getStitchedRegion(imageProvider, Region.EMPTY,
@@ -1893,7 +1896,7 @@ public class Eyes extends EyesBase {
                         getStitchOverlap(), regionPositionCompensation);
 
                 ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
-                result = new EyesWebDriverScreenshot(logger, driver, fullPageImage);
+                result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
             } else {
                 logger.verbose("Screenshot requested...");
                 BufferedImage screenshotImage = imageProvider.getImage();
