@@ -11,7 +11,12 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-public class TestWix {
+/**
+ * This encapsulates a test for a specific bug which caused a region to be taken incorrectly.
+ * The region is inside a {@code iframe} which is inside an absolute positioned {@code div}
+ * element.
+ */
+public class CheckRegionInFrameOffsetTest {
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {
 
         // Test 1
@@ -29,14 +34,13 @@ public class TestWix {
         logHandler = new StdoutLogHandler(true);
         eyes.setLogHandler(logHandler);
 
-        eyes.setDebugScreenshotsPath("c:\\temp\\logs");
-        eyes.setSaveDebugScreenshots(true);
+//        eyes.setDebugScreenshotsPath("c:\\temp\\logs");
+//        eyes.setSaveDebugScreenshots(true);
 
         try {
             driver = eyes.open(driver, "Eyes Selenium SDK", "WIX like test",
                     new RectangleSize(1024, 600));
 
-            //driver.get("file:///C:/Users/USER/devel/demo_pages/TestPages/WixLikeTestPage/index.html");
             driver.get("http://applitools.github.io/demo/TestPages/WixLikeTestPage/index.html");
 
             eyes.check("map", Target.frame("frame1").region(By.tagName("img")));
