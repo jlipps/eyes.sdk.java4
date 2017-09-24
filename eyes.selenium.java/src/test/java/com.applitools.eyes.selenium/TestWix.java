@@ -33,13 +33,13 @@ public class TestWix {
         eyes.setSaveDebugScreenshots(true);
 
         try {
-            driver = eyes.open(driver, "Eyes Selenium SDK", "Wix frame test",
+            driver = eyes.open(driver, "Eyes Selenium SDK", "WIX like test",
                     new RectangleSize(1024, 600));
 
-            driver.get("https://eventstest.wixsite.com/events-page-e2e/events/ba837913-7dad-41b9-b530-6c2cbfc4c265");
+            //driver.get("file:///C:/Users/USER/devel/demo_pages/TestPages/WixLikeTestPage/index.html");
+            driver.get("http://applitools.github.io/demo/TestPages/WixLikeTestPage/index.html");
 
-            eyes.check("map", Target.frame(By.id("TPAMultiSection_j5ocg4p8iframe")).region(By.id("map")));
-//            eyes.checkRegionInFrame("TPAMultiSection_j5ocg4p8iframe", By.id("map"));
+            eyes.check("map", Target.frame("frame1").region(By.tagName("img")));
 
             eyes.close();
 
