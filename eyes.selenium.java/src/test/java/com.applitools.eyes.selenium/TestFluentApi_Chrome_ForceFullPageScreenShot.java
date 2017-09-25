@@ -20,7 +20,7 @@ public class TestFluentApi_Chrome_ForceFullPageScreenShot extends TestFluentApi 
     public static final TestRule setTestSuitName = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            testSuitName = "Eyes Selenium SDK - Fluent API - Java - Chrome - ForceFPS";
+            testSuitName = "Eyes Selenium SDK - Fluent API - ForceFPS";
             forceFullPageScreenshot = true;
         }
     };
