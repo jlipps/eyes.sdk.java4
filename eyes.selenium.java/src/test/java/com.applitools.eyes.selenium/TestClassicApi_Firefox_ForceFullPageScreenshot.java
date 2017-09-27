@@ -19,7 +19,7 @@ public class TestClassicApi_Firefox_ForceFullPageScreenshot extends TestClassicA
     public static final TestRule setTestSuitName = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            testSuitName = "Eyes Selenium SDK - Classic API - Java - Firefox - ForceFPS";
+            testSuitName = "Eyes Selenium SDK - Classic API - ForceFPS";
             forceFullPageScreenshot = true;
         }
     };

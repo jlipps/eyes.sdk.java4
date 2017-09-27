@@ -20,7 +20,7 @@ public class TestClassicApi_Chrome extends TestClassicApi {
     public static final TestRule setTestSuitName = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            testSuitName = "Eyes Selenium SDK - Classic API - Java - Chrome";
+            testSuitName = "Eyes Selenium SDK - Classic API";
             forceFullPageScreenshot = false;
             runRemotely = true;
         }
