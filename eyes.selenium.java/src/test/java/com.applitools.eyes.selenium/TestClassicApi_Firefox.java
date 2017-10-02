@@ -19,7 +19,7 @@ public class TestClassicApi_Firefox extends TestClassicApi {
     public static final TestRule setTestSuitName = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            testSuitName = "Eyes Selenium SDK - Classic API - Java - Firefox";
+            testSuitName = "Eyes Selenium SDK - Classic API";
             forceFullPageScreenshot = false;
         }
     };

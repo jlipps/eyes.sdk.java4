@@ -20,7 +20,7 @@ public class TestFluentApi_Chrome extends TestFluentApi {
     public static final TestRule setTestSuitName = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            testSuitName = "Eyes Selenium SDK - Fluent API - Java - Chrome";
+            testSuitName = "Eyes Selenium SDK - Fluent API";
             forceFullPageScreenshot = false;
         }
     };
