@@ -651,23 +651,7 @@ public class Eyes extends EyesBase {
                     this.checkRegion(targetElement, name, checkSettings);
                 }
             } else if (seleniumCheckTarget.getFrameChain().size() > 0) {
-                if (stitchContent) {
-                    this.checkFullFrameOrElement(name, checkSettings);
-                } else {
-                    Frame frame = this.driver.getFrameChain().peek();
-                    final WebElement element = frame.getReference();
-                    this.driver.switchTo().parentFrame();
-                    switchedToFrameCount--;
-
-                    this.checkWindowBase(new RegionProvider() {
-                        @Override
-                        public Region getRegion() {
-                            Point p = element.getLocation();
-                            Dimension d = element.getSize();
-                            return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
-                        }
-                    }, name, false, checkSettings);
-                }
+                switchedToFrameCount = checkFrameFluent(name, checkSettings, switchedToFrameCount);
             } else {
                 this.checkWindowBase(NullRegionProvider.INSTANCE, name, false, checkSettings);
             }
@@ -681,6 +665,27 @@ public class Eyes extends EyesBase {
         this.stitchContent = false;
 
         logger.verbose("check - done!");
+    }
+
+    protected int checkFrameFluent(String name, ICheckSettings checkSettings, int switchedToFrameCount) {
+        if (stitchContent) {
+            this.checkFullFrameOrElement(name, checkSettings);
+        } else {
+            Frame frame = this.driver.getFrameChain().peek();
+            final WebElement element = frame.getReference();
+            this.driver.switchTo().parentFrame();
+            switchedToFrameCount--;
+
+            this.checkWindowBase(new RegionProvider() {
+                @Override
+                public Region getRegion() {
+                    Point p = element.getLocation();
+                    Dimension d = element.getSize();
+                    return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+                }
+            }, name, false, checkSettings);
+        }
+        return switchedToFrameCount;
     }
 
     private int switchToFrame(ISeleniumCheckTarget checkTarget) {
@@ -1879,7 +1884,7 @@ public class Eyes extends EyesBase {
                 logger.verbose("Building screenshot object...");
                 result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
                         new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
-            } else if (forceFullPageScreenshot) {
+            } else if (forceFullPageScreenshot || stitchContent) {
                 logger.verbose("Full page screenshot requested.");
 
                 // Save the current frame path.

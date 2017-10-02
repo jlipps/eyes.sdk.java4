@@ -31,64 +31,39 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
     private final WebDriver.TargetLocator targetLocator;
 
     /**
-     * An enum for the different types of frames we can switch into.
-     */
-    protected static enum TargetType {
-        FRAME, PARENT_FRAME, DEFAULT_CONTENT
-    }
-
-    /**
      * Will be called before switching into a frame.
-     * @param targetType  The type of frame we're about to switch into.
      * @param targetFrame The element about to be switched to, if available. Otherwise, null.
      */
-    public void willSwitchToFrame(
-            EyesTargetLocator.TargetType targetType,
-            WebElement targetFrame) {
-        logger.verbose("willSwitchToFrame()");
-        switch (targetType) {
-            case DEFAULT_CONTENT:
-                logger.verbose("Default content.");
-                driver.getFrameChain().clear();
-                break;
-            case PARENT_FRAME:
-                logger.verbose("Parent frame.");
-                driver.getFrameChain().pop();
-                break;
-            default: // Switching into a frame
-                logger.verbose("Frame");
+    public void willSwitchToFrame(WebElement targetFrame) {
+        EyesRemoteWebElement eyesFrame = (targetFrame instanceof EyesRemoteWebElement) ?
+                (EyesRemoteWebElement) targetFrame : new EyesRemoteWebElement(logger, driver, targetFrame);
 
-                EyesRemoteWebElement eyesFrame = (targetFrame instanceof EyesRemoteWebElement) ?
-                        (EyesRemoteWebElement)targetFrame : new EyesRemoteWebElement(logger, driver, targetFrame);
+        Point pl = targetFrame.getLocation();
+        Dimension ds = targetFrame.getSize();
 
-                String frameId = eyesFrame.getId();
-                Point pl = targetFrame.getLocation();
-                Dimension ds = targetFrame.getSize();
+        int clientWidth = eyesFrame.getClientWidth();
+        int clientHeight = eyesFrame.getClientHeight();
 
-                int clientWidth =  eyesFrame.getClientWidth();
-                int clientHeight = eyesFrame.getClientHeight();
+        Location location = new Location(pl.getX(), pl.getY());
 
-                Location location = new Location(pl.getX(), pl.getY());
+        // Get the frame's content location.
+        Location contentLocation =
+                new BordersAwareElementContentLocationProvider()
+                    .getLocation(logger, targetFrame, location);
 
-                // Get the frame's content location.
-                Location contentLocation = new
-                        BordersAwareElementContentLocationProvider
-                        ().getLocation(logger, targetFrame,
-                        location);
+        Location originalLocation = scrollPosition.getCurrentPosition();
+        scrollPosition.setPosition(location);
 
-                Location originalLocation = scrollPosition.getCurrentPosition();
-                scrollPosition.setPosition(location);
+        Location currentLocation = scrollPosition.getCurrentPosition();
 
-                Location currentLocation = scrollPosition.getCurrentPosition();
+        Frame frame = new Frame(logger, targetFrame,
+                contentLocation,
+                new RectangleSize(ds.getWidth(), ds.getHeight()),
+                new RectangleSize(clientWidth, clientHeight),
+                currentLocation,
+                originalLocation);
 
-                driver.getFrameChain().push(new Frame(logger, targetFrame,
-                        contentLocation,
-                        new RectangleSize(ds.getWidth(), ds.getHeight()),
-                        new RectangleSize(clientWidth, clientHeight),
-                        currentLocation,
-                        originalLocation));
-        }
-        logger.verbose("Done! FrameChain size: " + driver.getFrameChain().size());
+        driver.getFrameChain().push(frame);
     }
 
     /**
@@ -129,7 +104,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
         logger.verbose("Done! getting the specific frame...");
         WebElement targetFrame = frames.get(index);
         logger.verbose("Done! Making preparations...");
-        willSwitchToFrame(TargetType.FRAME, targetFrame);
+        willSwitchToFrame(targetFrame);
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(index);
         logger.verbose("Done!");
@@ -155,7 +130,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
             }
         }
         logger.verbose("Done! Making preparations..");
-        willSwitchToFrame(TargetType.FRAME, frames.get(0));
+        willSwitchToFrame(frames.get(0));
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(nameOrId);
         logger.verbose("Done!");
@@ -165,7 +140,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
     public WebDriver frame(WebElement frameElement) {
         logger.verbose("EyesTargetLocator.frame(element)");
         logger.verbose("Making preparations..");
-        willSwitchToFrame(TargetType.FRAME, frameElement);
+        willSwitchToFrame(frameElement);
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(frameElement);
         logger.verbose("Done!");
@@ -176,7 +151,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
         logger.verbose("EyesTargetLocator.parentFrame()");
         if (driver.getFrameChain().size() != 0) {
             logger.verbose("Making preparations..");
-            willSwitchToFrame(TargetType.PARENT_FRAME, null);
+            driver.getFrameChain().pop();
             logger.verbose("Done! Switching to parent frame..");
             targetLocator.parentFrame();
         }
@@ -236,7 +211,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
         logger.verbose("EyesTargetLocator.defaultContent()");
         if (driver.getFrameChain().size() != 0) {
             logger.verbose("Making preparations...");
-            willSwitchToFrame(TargetType.DEFAULT_CONTENT, null);
+            driver.getFrameChain().clear();
             logger.verbose("Done! Switching to default content...");
             targetLocator.defaultContent();
             logger.verbose("Done!");
