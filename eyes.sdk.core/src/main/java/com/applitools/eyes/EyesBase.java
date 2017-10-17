@@ -128,7 +128,6 @@ public abstract class EyesBase {
         debugScreenshotsProvider = new NullDebugScreenshotProvider();
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     /**
      * Sets the user given agent id of the SDK. {@code null} is referred to
      * as no id.

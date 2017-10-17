@@ -58,14 +58,13 @@ public class FullPageCaptureAlgorithm {
                                            RegionPositionCompensation regionPositionCompensation) {
         logger.verbose("getStitchedRegion()");
 
-        ArgumentGuard.notNull(region, "regionProvider");
+        ArgumentGuard.notNull(region, "region");
         ArgumentGuard.notNull(positionProvider, "positionProvider");
 
         logger.verbose(String.format("getStitchedRegion: originProvider: %s ; positionProvider: %s ; cutProvider: %s",
                 originProvider.getClass(), positionProvider.getClass(), cutProvider.getClass()));
 
         logger.verbose(String.format("Region to check: %s", region));
-        logger.verbose(String.format("Coordinates type: %s", region.getCoordinatesType()));
 
         // Saving the original position (in case we were already in the outermost frame).
         PositionMemento originalPosition = originProvider.getState();
