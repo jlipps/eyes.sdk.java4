@@ -39,7 +39,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     private final Region frameWindow;
 
     private static Location calcFrameLocationInScreenshot(Logger logger,
-            FrameChain frameChain, ScreenshotType screenshotType) {
+                                                          FrameChain frameChain, ScreenshotType screenshotType) {
 
         logger.verbose("Getting first frame..");
         Iterator<Frame> frameIterator = frameChain.iterator();
@@ -74,11 +74,11 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     }
 
     /**
-     * @param logger                     A Logger instance.
-     * @param driver                     The web driver used to get the screenshot.
-     * @param image                      The actual screenshot image.
-     * @param screenshotType             (Optional) The screenshot's type (e.g., viewport/full page).
-     * @param frameLocationInScreenshot  (Optional) The current frame's location in the screenshot.
+     * @param logger                    A Logger instance.
+     * @param driver                    The web driver used to get the screenshot.
+     * @param image                     The actual screenshot image.
+     * @param screenshotType            (Optional) The screenshot's type (e.g., viewport/full page).
+     * @param frameLocationInScreenshot (Optional) The current frame's location in the screenshot.
      */
     public EyesWebDriverScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image,
                                    ScreenshotType screenshotType, Location frameLocationInScreenshot) {
@@ -173,21 +173,21 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
      * See {@link #EyesWebDriverScreenshot(Logger, EyesWebDriver, BufferedImage, ScreenshotType, Location)}.
      * {@code screenshotType} defaults to {@code null}.
      * {@code frameLocationInScreenshot} defaults to {@code null}.
-     *
      * @param logger A Logger instance.
      * @param driver The web driver used to get the screenshot.
-     * @param image The actual screenshot image.
+     * @param image  The actual screenshot image.
      */
     public EyesWebDriverScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image) {
         this(logger, driver, image, null, null);
     }
 
     // TODO replace "entireFrameSize" as frame window ctor identifier
+
     /**
      * Creates a frame(!) window screenshot.
-     * @param logger A Logger instance.
-     * @param driver The web driver used to get the screenshot.
-     * @param image The actual screenshot image.
+     * @param logger          A Logger instance.
+     * @param driver          The web driver used to get the screenshot.
+     * @param image           The actual screenshot image.
      * @param entireFrameSize The full internal size of the frame.
      */
     public EyesWebDriverScreenshot(Logger logger, EyesWebDriver driver,
@@ -268,7 +268,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
     @Override
     public Location convertLocation(Location location,
-            CoordinatesType from, CoordinatesType to) {
+                                    CoordinatesType from, CoordinatesType to) {
 
         ArgumentGuard.notNull(location, "location");
         ArgumentGuard.notNull(from, "from");
@@ -288,7 +288,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
                 screenshotType == ScreenshotType.ENTIRE_FRAME) {
             if ((from == CoordinatesType.CONTEXT_RELATIVE
                     || from == CoordinatesType.CONTEXT_AS_IS)
-                        && to == CoordinatesType.SCREENSHOT_AS_IS) {
+                    && to == CoordinatesType.SCREENSHOT_AS_IS) {
 
                 // If this is not a sub-screenshot, this will have no effect.
                 result = result.offset(frameLocationInScreenshot.getX(),
@@ -296,7 +296,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
             } else if (from == CoordinatesType.SCREENSHOT_AS_IS &&
                     (to == CoordinatesType.CONTEXT_RELATIVE
-                            || to == CoordinatesType.CONTEXT_AS_IS)){
+                            || to == CoordinatesType.CONTEXT_AS_IS)) {
 
                 result = result.offset(-frameLocationInScreenshot.getX(),
                         -frameLocationInScreenshot.getY());
@@ -388,8 +388,8 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
     @Override
     public Region getIntersectedRegion(Region region,
-                                          CoordinatesType originalCoordinatesType,
-                                          CoordinatesType resultCoordinatesType) {
+                                       CoordinatesType originalCoordinatesType,
+                                       CoordinatesType resultCoordinatesType) {
 
         if (region.isEmpty()) {
             return new Region(region);
@@ -421,7 +421,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         // If the intersection is empty we don't want to convert the
         // coordinates.
-        if(intersectedRegion.isEmpty()) {
+        if (intersectedRegion.isEmpty()) {
             return intersectedRegion;
         }
 

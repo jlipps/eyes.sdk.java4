@@ -113,8 +113,7 @@ public abstract class EyesBase {
         positionProvider = new InvalidPositionProvider();
         viewportSizeHandler = new SimplePropertyHandler<>();
         viewportSizeHandler.set(null);
-        serverConnector = ServerConnectorFactory.create(logger,
-                getBaseAgentId(), serverUrl);
+        serverConnector = ServerConnectorFactory.create(logger, getBaseAgentId(), serverUrl);
         matchTimeout = DEFAULT_MATCH_TIMEOUT;
         runningSession = null;
         defaultMatchSettings = new ImageMatchSettings();
