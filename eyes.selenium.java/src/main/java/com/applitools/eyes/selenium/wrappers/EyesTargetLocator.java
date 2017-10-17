@@ -67,16 +67,6 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
     }
 
     /**
-     * Will be called before switching into a window.
-     * @param nameOrHandle The name/handle of the window to be switched to.
-     */
-    public void willSwitchToWindow(String nameOrHandle) {
-        logger.verbose("willSwitchToWindow()");
-        driver.getFrameChain().clear();
-        logger.verbose("Done! FrameChain size: " + driver.getFrameChain().size());
-    }
-
-    /**
      * Initialized a new EyesTargetLocator object.
      * @param driver        The WebDriver from which the targetLocator was received.
      * @param targetLocator The actual TargetLocator object.
@@ -198,9 +188,8 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
     }
 
     public WebDriver window(String nameOrHandle) {
-        logger.verbose("EyesTargetLocator.frames()");
-        logger.verbose("Making preparations...");
-        willSwitchToWindow(nameOrHandle);
+        logger.verbose("EyesTargetLocator.window()");
+        driver.getFrameChain().clear();
         logger.verbose("Done! Switching to window...");
         targetLocator.window(nameOrHandle);
         logger.verbose("Done!");
