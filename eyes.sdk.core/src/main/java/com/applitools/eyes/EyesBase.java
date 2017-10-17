@@ -955,7 +955,7 @@ public abstract class EyesBase {
     /**
      * @return The currently set position provider.
      */
-    protected PositionProvider getPositionProvider() {
+    public PositionProvider getPositionProvider() {
         return positionProvider;
     }
 

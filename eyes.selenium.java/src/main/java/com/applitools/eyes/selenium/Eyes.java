@@ -1585,7 +1585,6 @@ public class Eyes extends EyesBase {
         String originalOverflow = null;
 
         Point p = eyesElement.getLocation();
-        //scrollPositionProvider.setPosition(new Location(p.getX(), p.getY()));
 
         try {
             checkFrameOrElement = true;

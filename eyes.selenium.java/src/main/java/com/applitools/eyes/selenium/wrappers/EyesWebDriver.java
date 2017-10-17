@@ -1,6 +1,8 @@
 package com.applitools.eyes.selenium.wrappers;
 
-import com.applitools.eyes.*;
+import com.applitools.eyes.EyesException;
+import com.applitools.eyes.Logger;
+import com.applitools.eyes.RectangleSize;
 import com.applitools.eyes.selenium.Eyes;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.frames.FrameChain;
@@ -34,6 +36,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     private final TouchScreen touch;
     private final Map<String, WebElement> elementsIds;
     private final FrameChain frameChain;
+
     private ImageRotation rotation;
     private RectangleSize defaultContentViewportSize;
 
@@ -100,7 +103,6 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
         return eyes;
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     public RemoteWebDriver getRemoteWebDriver() {
         return driver;
     }

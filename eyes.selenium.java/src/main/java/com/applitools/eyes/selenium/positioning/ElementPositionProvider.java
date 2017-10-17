@@ -10,7 +10,6 @@ import org.openqa.selenium.*;
 
 public class ElementPositionProvider implements PositionProvider {
     private final Logger logger;
-    private final EyesWebDriver driver;
     private final EyesRemoteWebElement element;
 
     public ElementPositionProvider(Logger logger, EyesWebDriver driver, WebElement element) {
@@ -19,7 +18,6 @@ public class ElementPositionProvider implements PositionProvider {
         ArgumentGuard.notNull(element, "element");
 
         this.logger = logger;
-        this.driver = driver;
         this.element = (element instanceof  EyesRemoteWebElement) ?
                 (EyesRemoteWebElement)element : new EyesRemoteWebElement(logger, driver, element);
 
