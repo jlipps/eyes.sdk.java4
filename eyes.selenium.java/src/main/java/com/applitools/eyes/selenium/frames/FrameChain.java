@@ -169,6 +169,7 @@ public class FrameChain implements Iterable<Frame>{
      *
      * @return An iterator to go over the frames in the chain.
      */
+    @Override
     public Iterator<Frame> iterator() {
         return new Iterator<Frame>() {
             Iterator<Frame> framesIterator = frames.iterator();
