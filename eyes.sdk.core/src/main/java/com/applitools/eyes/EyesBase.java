@@ -103,6 +103,9 @@ public abstract class EyesBase {
         ArgumentGuard.notNull(serverUrl, "serverUrl");
 
         logger = new Logger();
+
+        Region.initLogger(logger);
+
         scaleProviderHandler = new SimplePropertyHandler<>();
         scaleProviderHandler.set(new NullScaleProvider());
         cutProviderHandler = new SimplePropertyHandler<>();
