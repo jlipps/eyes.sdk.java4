@@ -30,8 +30,11 @@ public abstract class TestSetup {
 
     protected static String testSuitName;
 
+    protected static String testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
+
     protected static boolean forceFullPageScreenshot = false;
     protected static boolean runRemotely = true;
+    protected static boolean hideScrollbars = true;
     protected static DesiredCapabilities caps;
 
     @BeforeClass
@@ -39,7 +42,7 @@ public abstract class TestSetup {
 
         // Initialize the eyes SDK and set your private API key.
         eyes = new Eyes();
-//        eyes.setServerUrl(URI.create("https://localhost.applitools.com"));
+        eyes.setServerUrl(URI.create("https://localhost.applitools.com"));
         eyes.setApiKey(System.getenv("APPLITOOLS_API_KEY"));
 
 //        logHandler = new FileLogger("c:\\temp\\logs\\Java\\TestElement.log", true, true);
@@ -48,10 +51,11 @@ public abstract class TestSetup {
         eyes.setForceFullPageScreenshot(forceFullPageScreenshot);
         eyes.setStitchMode(StitchMode.CSS);
 
-        eyes.setHideScrollbars(true);
+        eyes.setHideScrollbars(hideScrollbars);
 
-//        eyes.setDebugScreenshotsPath("c:\\temp\\logs");
-//        eyes.setSaveDebugScreenshots(true);
+        eyes.setDebugScreenshotsPath("c:\\temp\\logs");
+        eyes.setSaveDebugScreenshots(true);
+
         eyes.setBatch(new BatchInfo(testSuitName));
     }
 
@@ -71,7 +75,7 @@ public abstract class TestSetup {
                     new RectangleSize(800, 599)
             );
 
-            driver.navigate().to("http://applitools.github.io/demo/TestPages/FramesTestPage/");
+            driver.navigate().to(testedPageUrl);
             //eyes.getPositionProvider().setPosition(new Location(100,200));
         }
 
