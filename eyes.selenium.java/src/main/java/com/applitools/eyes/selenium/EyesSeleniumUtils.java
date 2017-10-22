@@ -225,8 +225,7 @@ public class EyesSeleniumUtils {
      * @param executor The executor to use.
      * @return The current scroll position of the current frame.
      */
-    public static Location getCurrentScrollPosition(
-            IEyesJsExecutor executor) {
+    public static Location getCurrentScrollPosition(IEyesJsExecutor executor) {
         //noinspection unchecked
         List<Number> positionAsList = (List<Number>)executor.executeScript(JS_GET_CURRENT_SCROLL_POSITION);
         return new Location((int)Math.ceil(positionAsList.get(0).doubleValue()),

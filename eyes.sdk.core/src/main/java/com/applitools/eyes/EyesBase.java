@@ -103,6 +103,9 @@ public abstract class EyesBase {
         ArgumentGuard.notNull(serverUrl, "serverUrl");
 
         logger = new Logger();
+
+        Region.initLogger(logger);
+
         scaleProviderHandler = new SimplePropertyHandler<>();
         scaleProviderHandler.set(new NullScaleProvider());
         cutProviderHandler = new SimplePropertyHandler<>();
@@ -110,8 +113,7 @@ public abstract class EyesBase {
         positionProvider = new InvalidPositionProvider();
         viewportSizeHandler = new SimplePropertyHandler<>();
         viewportSizeHandler.set(null);
-        serverConnector = ServerConnectorFactory.create(logger,
-                getBaseAgentId(), serverUrl);
+        serverConnector = ServerConnectorFactory.create(logger, getBaseAgentId(), serverUrl);
         matchTimeout = DEFAULT_MATCH_TIMEOUT;
         runningSession = null;
         defaultMatchSettings = new ImageMatchSettings();
@@ -126,7 +128,6 @@ public abstract class EyesBase {
         debugScreenshotsProvider = new NullDebugScreenshotProvider();
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     /**
      * Sets the user given agent id of the SDK. {@code null} is referred to
      * as no id.
@@ -954,7 +955,7 @@ public abstract class EyesBase {
     /**
      * @return The currently set position provider.
      */
-    protected PositionProvider getPositionProvider() {
+    public PositionProvider getPositionProvider() {
         return positionProvider;
     }
 
