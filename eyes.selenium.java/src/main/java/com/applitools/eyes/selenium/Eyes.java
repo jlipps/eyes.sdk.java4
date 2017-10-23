@@ -73,7 +73,12 @@ public class Eyes extends EyesBase {
         return regionToCheck;
     }
 
+    public void setRegionToCheck(Region regionToCheck) {
+        this.regionToCheck = regionToCheck;
+    }
+
     private Region regionToCheck = null;
+
     private boolean hideScrollbars;
     private ImageRotation rotation;
     private double devicePixelRatio;
@@ -385,6 +390,8 @@ public class Eyes extends EyesBase {
 
         logger.log(String.format("CheckWindow(%d, '%s')", matchTimeout, tag));
 
+        this.regionToCheck = null;
+
         super.checkWindowBase(
                 NullRegionProvider.INSTANCE,
                 tag,
@@ -631,6 +638,8 @@ public class Eyes extends EyesBase {
 
         int switchedToFrameCount = this.switchToFrame(seleniumCheckTarget);
 
+        this.regionToCheck = null;
+
         if (targetRegion != null) {
             this.checkWindowBase(new RegionProvider() {
                 @Override
@@ -704,20 +713,22 @@ public class Eyes extends EyesBase {
     }
 
     private boolean switchToFrame(ISeleniumFrameCheckTarget frameTarget) {
+        WebDriver.TargetLocator switchTo = this.driver.switchTo();
+
         if (frameTarget.getFrameIndex() != null) {
-            this.driver.switchTo().frame(frameTarget.getFrameIndex());
+            switchTo.frame(frameTarget.getFrameIndex());
             return true;
         }
 
         if (frameTarget.getFrameNameOrId() != null) {
-            this.driver.switchTo().frame(frameTarget.getFrameNameOrId());
+            switchTo.frame(frameTarget.getFrameNameOrId());
             return true;
         }
 
         if (frameTarget.getFrameSelector() != null) {
             WebElement frameElement = this.driver.findElement(frameTarget.getFrameSelector());
             if (frameElement != null) {
-                this.driver.switchTo().frame(frameElement);
+                switchTo.frame(frameElement);
                 return true;
             }
         }
@@ -883,6 +894,8 @@ public class Eyes extends EyesBase {
 
         logger.log(String.format("CheckRegion(element, %d, '%s')",
                 matchTimeout, tag));
+
+        this.regionToCheck = null;
 
         // If needed, scroll to the top/left of the element (additional help
         // to make sure it's visible).
@@ -1307,7 +1320,7 @@ public class Eyes extends EyesBase {
             super.checkWindowBase(NullRegionProvider.INSTANCE, tag, false, matchTimeout);
         } finally {
             checkFrameOrElement = false;
-            regionToCheck = Region.EMPTY;
+            regionToCheck = null;
         }
     }
 
@@ -1578,6 +1591,8 @@ public class Eyes extends EyesBase {
         final EyesRemoteWebElement eyesElement = (element instanceof EyesRemoteWebElement) ?
                 (EyesRemoteWebElement) element : new EyesRemoteWebElement(logger, driver, element);
 
+        this.regionToCheck = null;
+
         PositionProvider originalPositionProvider = positionProvider;
         PositionProvider scrollPositionProvider = new ScrollPositionProvider(logger, jsExecutor);
         Location originalScrollPosition = scrollPositionProvider.getCurrentPosition();
@@ -1622,7 +1637,7 @@ public class Eyes extends EyesBase {
 
             scrollPositionProvider.setPosition(originalScrollPosition);
             positionProvider = originalPositionProvider;
-            regionToCheck = Region.EMPTY;
+            regionToCheck = null;
             elementPositionProvider = null;
         }
     }
@@ -1888,7 +1903,7 @@ public class Eyes extends EyesBase {
 
                 // Save the current frame path.
                 FrameChain originalFrame = new FrameChain(logger, driver.getFrameChain());
-                Location originalFramePosition = originalFrame.size() > 0 ? originalFrame.getDefaultContentScrollPosition() : new Location(0,0);
+                Location originalFramePosition = originalFrame.size() > 0 ? originalFrame.getDefaultContentScrollPosition() : new Location(0, 0);
 
                 driver.switchTo().defaultContent();
                 FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
