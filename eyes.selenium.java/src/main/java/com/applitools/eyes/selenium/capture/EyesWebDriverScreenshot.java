@@ -40,10 +40,9 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     // The part of the frame window which is visible in the screenshot
     private final Region frameWindow;
 
-    private Location getDefaultContentScrollPosition() {
-        IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
+    private static Location getDefaultContentScrollPosition(Logger logger, FrameChain currentFrames, EyesWebDriver driver) {
+        IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(driver);
         PositionProvider positionProvider = new ScrollPositionProvider(logger, jsExecutor);
-        FrameChain currentFrames = getFrameChain();
         if (currentFrames.size() == 0) {
             return positionProvider.getCurrentPosition();
         }
@@ -62,7 +61,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         return defaultContentScrollPosition;
     }
 
-    private Location calcFrameLocationInScreenshot(Logger logger,
+    public static Location calcFrameLocationInScreenshot(Logger logger, EyesWebDriver driver,
                                                    FrameChain frameChain, ScreenshotType screenshotType) {
 
         logger.verbose("Getting first frame..");
@@ -73,7 +72,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         // We only consider scroll of the default content if this is a viewport screenshot.
         if (screenshotType == ScreenshotType.VIEWPORT) {
-            Location windowScroll = this.getDefaultContentScrollPosition();
+            Location windowScroll = getDefaultContentScrollPosition(logger, frameChain, driver);
             locationInScreenshot = locationInScreenshot.offset(-windowScroll.getX(), -windowScroll.getY());
         }
 
@@ -137,7 +136,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         // This is used for frame related calculations.
         if (frameLocationInScreenshot == null) {
             if (frameChain.size() > 0) {
-                frameLocationInScreenshot = calcFrameLocationInScreenshot(logger, frameChain, this.screenshotType);
+                frameLocationInScreenshot = calcFrameLocationInScreenshot(logger, this.driver, frameChain, this.screenshotType);
             } else {
                 frameLocationInScreenshot = new Location(0, 0);
             }
@@ -458,7 +457,6 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
     /**
      * Gets the elements region in the screenshot.
-     *
      * @param element The element which region we want to intersect.
      * @return The intersected region, in {@code SCREENSHOT_AS_IS} coordinates
      * type.
