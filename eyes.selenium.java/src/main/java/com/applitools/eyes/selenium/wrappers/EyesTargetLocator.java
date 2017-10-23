@@ -119,7 +119,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
                         "No frame with name or id '%s' exists!", nameOrId));
             }
         }
-        logger.verbose("Done! Making preparations..");
+        logger.verbose("Done! Making preparations...");
         willSwitchToFrame(frames.get(0));
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(nameOrId);
@@ -129,7 +129,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
 
     public WebDriver frame(WebElement frameElement) {
         logger.verbose("EyesTargetLocator.frame(element)");
-        logger.verbose("Making preparations..");
+        logger.verbose("Making preparations...");
         willSwitchToFrame(frameElement);
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(frameElement);
