@@ -106,13 +106,8 @@ public abstract class EyesBase {
 
         Region.initLogger(logger);
 
-        scaleProviderHandler = new SimplePropertyHandler<>();
-        scaleProviderHandler.set(new NullScaleProvider());
-        cutProviderHandler = new SimplePropertyHandler<>();
-        cutProviderHandler.set(new NullCutProvider());
-        positionProvider = new InvalidPositionProvider();
-        viewportSizeHandler = new SimplePropertyHandler<>();
-        viewportSizeHandler.set(null);
+        initProviders();
+
         serverConnector = ServerConnectorFactory.create(logger, getBaseAgentId(), serverUrl);
         matchTimeout = DEFAULT_MATCH_TIMEOUT;
         runningSession = null;
@@ -126,6 +121,16 @@ public abstract class EyesBase {
         agentId = null;
         lastScreenshot = null;
         debugScreenshotsProvider = new NullDebugScreenshotProvider();
+    }
+
+    private void initProviders() {
+        scaleProviderHandler = new SimplePropertyHandler<>();
+        scaleProviderHandler.set(new NullScaleProvider());
+        cutProviderHandler = new SimplePropertyHandler<>();
+        cutProviderHandler.set(new NullCutProvider());
+        positionProvider = new InvalidPositionProvider();
+        viewportSizeHandler = new SimplePropertyHandler<>();
+        viewportSizeHandler.set(null);
     }
 
     /**
@@ -1023,7 +1028,7 @@ public abstract class EyesBase {
         ArgumentGuard.isValidState(getIsOpen(), "Eyes not open");
         ArgumentGuard.notNull(regionProvider, "regionProvider");
 
-        result = matchWindow(regionProvider, tag, ignoreMismatch, checkSettings);
+        result = matchWindow(regionProvider, tag, ignoreMismatch, checkSettings, this);
 
         logger.verbose("MatchWindow Done!");
 
@@ -1038,48 +1043,54 @@ public abstract class EyesBase {
         return result;
     }
 
-    private MatchResult matchWindow(RegionProvider regionProvider, String tag, boolean ignoreMismatch, ICheckSettings checkSettings) {
+    private static MatchResult matchWindow(RegionProvider regionProvider, String tag, boolean ignoreMismatch,
+                                           ICheckSettings checkSettings, EyesBase self) {
         MatchResult result;
         ICheckSettingsInternal checkSettingsInternal = (checkSettings instanceof ICheckSettingsInternal) ? (ICheckSettingsInternal) checkSettings : null;
 
         int retryTimeout = -1;
+        ImageMatchSettings defaultMatchSettings = self.getDefaultMatchSettings();
         ImageMatchSettings imageMatchSettings = null;
         if (checkSettingsInternal != null) {
             retryTimeout = checkSettingsInternal.getTimeout();
 
             MatchLevel matchLevel = checkSettingsInternal.getMatchLevel();
-            matchLevel = (matchLevel == null) ? getDefaultMatchSettings().getMatchLevel() : matchLevel;
+            matchLevel = (matchLevel == null) ? defaultMatchSettings.getMatchLevel() : matchLevel;
 
             imageMatchSettings = new ImageMatchSettings(matchLevel, null);
 
-            collectIgnoreRegions(checkSettingsInternal, imageMatchSettings);
-            collectFloatingRegions(checkSettingsInternal, imageMatchSettings);
+            collectIgnoreRegions(checkSettingsInternal, imageMatchSettings, self);
+            collectFloatingRegions(checkSettingsInternal, imageMatchSettings, self);
 
             Boolean ignoreCaret = checkSettingsInternal.getIgnoreCaret();
-            imageMatchSettings.setIgnoreCaret((ignoreCaret == null) ? getDefaultMatchSettings().getIgnoreCaret() : ignoreCaret);
+            imageMatchSettings.setIgnoreCaret((ignoreCaret == null) ? defaultMatchSettings.getIgnoreCaret() : ignoreCaret);
         }
 
-        logger.verbose(String.format("CheckWindowBase(%s, '%s', %b, %d)", regionProvider.getClass(), tag, ignoreMismatch, retryTimeout));
+        self.logger.verbose(String.format("CheckWindowBase(%s, '%s', %b, %d)",
+                regionProvider.getClass(), tag, ignoreMismatch, retryTimeout));
 
-        logger.verbose("Calling match window...");
-        result = matchWindowTask.matchWindow(getUserInputs(), regionProvider.getRegion(), tag,
-                shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, imageMatchSettings, retryTimeout);
+        self.logger.verbose("Calling match window...");
+        result = self.matchWindowTask.matchWindow(self.getUserInputs(), regionProvider.getRegion(), tag,
+                self.shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, imageMatchSettings, retryTimeout);
 
         return result;
     }
 
-    private void collectIgnoreRegions(ICheckSettingsInternal checkSettingsInternal, ImageMatchSettings imageMatchSettings) {
+    private static void collectIgnoreRegions(ICheckSettingsInternal checkSettingsInternal,
+                                      ImageMatchSettings imageMatchSettings, EyesBase self) {
+
         List<Region> ignoreRegions = new ArrayList<>();
         for (GetRegion ignoreRegionProvider : checkSettingsInternal.getIgnoreRegions()) {
-            ignoreRegions.add(ignoreRegionProvider.getRegion(this));
+            ignoreRegions.add(ignoreRegionProvider.getRegion(self));
         }
         imageMatchSettings.setIgnoreRegions(ignoreRegions.toArray(new Region[0]));
     }
 
-    private void collectFloatingRegions(ICheckSettingsInternal checkSettingsInternal, ImageMatchSettings imageMatchSettings) {
+    private static void collectFloatingRegions(ICheckSettingsInternal checkSettingsInternal,
+                                               ImageMatchSettings imageMatchSettings, EyesBase self) {
         List<FloatingMatchSettings> floatingRegions = new ArrayList<>();
         for (GetFloatingRegion floatingRegionProvider : checkSettingsInternal.getFloatingRegions()) {
-            floatingRegions.add(floatingRegionProvider.getRegion(this));
+            floatingRegions.add(floatingRegionProvider.getRegion(self));
         }
         imageMatchSettings.setFloatingRegions(floatingRegions.toArray(new FloatingMatchSettings[0]));
     }
@@ -1227,7 +1238,8 @@ public abstract class EyesBase {
             this.testName = testName;
             viewportSizeHandler.set(viewportSize);
             this.sessionType = sessionType != null ? sessionType : SessionType.SEQUENTIAL;
-            scaleProviderHandler.set(new NullScaleProvider());
+
+            initProviders();
 
             ensureRunningSession();
 
