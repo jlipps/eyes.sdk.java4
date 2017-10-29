@@ -133,13 +133,10 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
     private Location getUpdatedFrameLocationInScreenshot(Logger logger, Location frameLocationInScreenshot) {
         logger.verbose(String.format("frameLocationInScreenshot: %s", frameLocationInScreenshot));
-        // This is used for frame related calculations.
-        if (frameLocationInScreenshot == null) {
-            if (frameChain.size() > 0) {
-                frameLocationInScreenshot = calcFrameLocationInScreenshot(logger, this.driver, frameChain, this.screenshotType);
-            } else {
-                frameLocationInScreenshot = new Location(0, 0);
-            }
+        if (frameChain.size() > 0) {
+            frameLocationInScreenshot = calcFrameLocationInScreenshot(logger, this.driver, frameChain, this.screenshotType);
+        } else if (frameLocationInScreenshot == null) {
+            frameLocationInScreenshot = new Location(0, 0);
         }
         return frameLocationInScreenshot;
     }
@@ -269,20 +266,8 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         BufferedImage subScreenshotImage =
                 ImageUtils.getImagePart(image, asIsSubScreenshotRegion);
 
-        // The frame location in the sub screenshot is the negative of the
-        // context-as-is location of the region.
-        Location contextAsIsRegionLocation =
-                convertLocation(asIsSubScreenshotRegion.getLocation(),
-                        CoordinatesType.SCREENSHOT_AS_IS,
-                        CoordinatesType.CONTEXT_AS_IS);
-
-        Location frameLocationInSubScreenshot =
-                new Location(-contextAsIsRegionLocation.getX(),
-                        -contextAsIsRegionLocation.getY());
-
-        EyesWebDriverScreenshot result = new EyesWebDriverScreenshot(logger,
-                driver, subScreenshotImage, screenshotType,
-                frameLocationInSubScreenshot);
+        EyesWebDriverScreenshot result = new EyesWebDriverScreenshot(logger, driver, subScreenshotImage,
+                new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
 
         logger.verbose("Done!");
         return result;
