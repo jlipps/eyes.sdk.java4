@@ -20,7 +20,7 @@ public class TestSpecialCases_Chrome_ForceFullPageScreenshot extends TestSpecial
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Special Cases - ForceFPS";
             testedPageUrl = "file:///C:/Users/USER/devel/demo_pages/TestPages/WixLikeTestPage/index.html";
-            hideScrollbars = false;
+            hideScrollbars = true;
             forceFullPageScreenshot = true;
         }
     };
@@ -30,7 +30,7 @@ public class TestSpecialCases_Chrome_ForceFullPageScreenshot extends TestSpecial
         @Override
         public Statement apply(Statement statement, Description description) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("disable-infobars");
+            options.addArguments("disable-infobars", "headless");
 
             //Run locally
             //-----------

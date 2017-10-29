@@ -31,7 +31,7 @@ public class TestClassicApi_Chrome extends TestClassicApi {
         @Override
         public Statement apply(Statement statement, Description description) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("disable-infobars");
+            options.addArguments("disable-infobars", "headless");
 
             //Run locally
             //-----------

@@ -77,6 +77,8 @@ public abstract class TestSetup {
 
             driver.navigate().to(testedPageUrl);
             //eyes.getPositionProvider().setPosition(new Location(100,200));
+
+            eyes.setDebugScreenshotsPrefix("Java_" + description.getMethodName() + "_" );
         }
 
         protected void finished(Description description) {
