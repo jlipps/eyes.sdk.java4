@@ -21,6 +21,7 @@ public class TestClassicApi_Chrome extends TestClassicApi {
         @Override
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Classic API";
+            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
             forceFullPageScreenshot = false;
             runRemotely = true;
         }

@@ -21,6 +21,7 @@ public class TestFluentApi_Safari_ForceFullPageScreenshot extends TestFluentApi 
         @Override
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Fluent API - Java - Safari - ForceFPS";
+            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
             forceFullPageScreenshot = true;
             runRemotely = false;
         }

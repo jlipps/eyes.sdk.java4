@@ -21,6 +21,7 @@ public class TestFluentApi_Chrome extends TestFluentApi {
         @Override
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Fluent API";
+            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
             forceFullPageScreenshot = false;
         }
     };

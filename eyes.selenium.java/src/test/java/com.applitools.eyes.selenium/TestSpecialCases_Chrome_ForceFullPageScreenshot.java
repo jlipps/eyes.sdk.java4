@@ -30,7 +30,8 @@ public class TestSpecialCases_Chrome_ForceFullPageScreenshot extends TestSpecial
         @Override
         public Statement apply(Statement statement, Description description) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("disable-infobars", "headless");
+            options.addArguments("disable-infobars");
+            options.addArguments("headless");
 
             //Run locally
             //-----------

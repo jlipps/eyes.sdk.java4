@@ -21,6 +21,7 @@ public class TestFluentApi_Chrome_ForceFullPageScreenShot extends TestFluentApi 
         @Override
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Fluent API - ForceFPS";
+            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
             forceFullPageScreenshot = true;
         }
     };
@@ -30,7 +31,8 @@ public class TestFluentApi_Chrome_ForceFullPageScreenShot extends TestFluentApi 
         @Override
         public Statement apply(Statement statement, Description description) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("disable-infobars", "headless");
+            options.addArguments("disable-infobars");
+            options.addArguments("headless");
 
             //Run locally
             //-----------
