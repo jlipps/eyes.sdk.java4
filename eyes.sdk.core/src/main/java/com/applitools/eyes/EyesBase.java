@@ -1232,14 +1232,14 @@ public abstract class EyesBase {
             logOpenBase();
             validateSessionOpen();
 
+            initProviders();
+
             this.isViewportSizeSet = false;
 
             this.currentAppName = appName != null ? appName : this.appName;
             this.testName = testName;
             viewportSizeHandler.set(viewportSize);
             this.sessionType = sessionType != null ? sessionType : SessionType.SEQUENTIAL;
-
-            initProviders();
 
             ensureRunningSession();
 
@@ -1391,9 +1391,8 @@ public abstract class EyesBase {
             return;
         }
 
-        control = lastScreenshot.getIntersectedRegion(control,
-                CoordinatesType.CONTEXT_RELATIVE,
-                CoordinatesType.SCREENSHOT_AS_IS);
+        control = lastScreenshot.getIntersectedRegion(control, CoordinatesType.SCREENSHOT_AS_IS);
+
         if (control.isEmpty()) {
             logger.verbose(String.format("Ignoring '%s' (out of bounds)",
                     text));
@@ -1446,9 +1445,7 @@ public abstract class EyesBase {
         }
 
         Region controlScreenshotIntersect =
-                lastScreenshot.getIntersectedRegion(control,
-                        CoordinatesType.CONTEXT_RELATIVE,
-                        CoordinatesType.SCREENSHOT_AS_IS);
+                lastScreenshot.getIntersectedRegion(control, CoordinatesType.SCREENSHOT_AS_IS);
 
         // If the region is NOT empty, we'll give the coordinates relative to
         // the control.
