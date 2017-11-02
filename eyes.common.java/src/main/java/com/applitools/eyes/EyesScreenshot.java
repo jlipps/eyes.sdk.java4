@@ -62,27 +62,12 @@ public abstract class EyesScreenshot {
 
     /**
      * Get the intersection of the given region with the screenshot.
-     * @param region                  The region to intersect.
-     * @param originalCoordinatesType The coordinates type of {@code region}.
-     * @param resultCoordinatesType   The coordinates type of the resulting region.
-     * @return The intersected region, in {@code resultCoordinatesType}
-     * coordinates.
-     */
-    public abstract Region getIntersectedRegion(Region region,
-                                                CoordinatesType originalCoordinatesType,
-                                                CoordinatesType resultCoordinatesType);
-
-    /**
-     * Get the intersection of the given region with the screenshot.
      * @param region          The region to intersect.
      * @param coordinatesType The coordinates type of {@code region}.
      * @return The intersected region, in {@code coordinatesType} coordinates.
      */
-    public Region getIntersectedRegion(Region region,
-                                       CoordinatesType coordinatesType) {
-        return getIntersectedRegion(region, coordinatesType, coordinatesType);
-    }
-
+    public abstract Region getIntersectedRegion(Region region,
+                                       CoordinatesType coordinatesType);
     /**
      * Converts a region's location coordinates with the {@code from}
      * coordinates type to the {@code to} coordinates type.

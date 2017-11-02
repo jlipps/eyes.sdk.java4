@@ -141,7 +141,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         return frameLocationInScreenshot;
     }
 
-    private Location getUpdatedScrollPosition(ScrollPositionProvider positionProvider) {
+    private static Location getUpdatedScrollPosition(PositionProvider positionProvider) {
         Location sp;
         try {
             sp = positionProvider.getCurrentPosition();
@@ -251,8 +251,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         ArgumentGuard.notNull(region, "region");
 
         // We calculate intersection based on as-is coordinates.
-        Region asIsSubScreenshotRegion = getIntersectedRegion(region,
-                region.getCoordinatesType(), CoordinatesType.SCREENSHOT_AS_IS);
+        Region asIsSubScreenshotRegion = getIntersectedRegion(region, CoordinatesType.SCREENSHOT_AS_IS);
 
         if (asIsSubScreenshotRegion.isEmpty() ||
                 (throwIfClipped &&
@@ -332,6 +331,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
             case CONTEXT_RELATIVE:
                 switch (to) {
                     case SCREENSHOT_AS_IS:
+
                         // First, convert context-relative to context-as-is.
                         result = result.offset(-currentFrameScrollPosition.getX(),
                                 -currentFrameScrollPosition.getY());
@@ -396,12 +396,13 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
     @Override
     public Region getIntersectedRegion(Region region,
-                                       CoordinatesType originalCoordinatesType,
                                        CoordinatesType resultCoordinatesType) {
 
         if (region.isEmpty()) {
             return new Region(region);
         }
+
+        CoordinatesType originalCoordinatesType = region.getCoordinatesType();
 
         Region intersectedRegion = convertRegionLocation(region,
                 originalCoordinatesType, CoordinatesType.SCREENSHOT_AS_IS);

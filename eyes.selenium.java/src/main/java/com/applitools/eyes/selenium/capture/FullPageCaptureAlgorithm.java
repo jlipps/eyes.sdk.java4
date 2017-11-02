@@ -248,7 +248,7 @@ public class FullPageCaptureAlgorithm {
     private Region getRegionInScreenshot(Region region, BufferedImage image, double pixelRatio,
                                          EyesScreenshot screenshot, RegionPositionCompensation regionPositionCompensation) {
         // Region regionInScreenshot = screenshot.convertRegionLocation(regionProvider.getRegion(), regionProvider.getCoordinatesType(), CoordinatesType.SCREENSHOT_AS_IS);
-        Region regionInScreenshot = screenshot.getIntersectedRegion(region, region.getCoordinatesType(), CoordinatesType.SCREENSHOT_AS_IS);
+        Region regionInScreenshot = screenshot.getIntersectedRegion(region, CoordinatesType.SCREENSHOT_AS_IS);
 
         logger.verbose("Done! Region in screenshot: " + regionInScreenshot);
         regionInScreenshot = regionInScreenshot.scale(pixelRatio);
