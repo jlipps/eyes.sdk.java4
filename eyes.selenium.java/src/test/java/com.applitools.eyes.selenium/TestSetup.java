@@ -45,9 +45,9 @@ public abstract class TestSetup {
         eyes.setServerUrl(URI.create("https://localhost.applitools.com"));
         eyes.setApiKey(System.getenv("APPLITOOLS_API_KEY"));
 
-//        logHandler = new FileLogger("c:\\temp\\logs\\Java\\TestElement.log", true, true);
+        //logHandler = new FileLogger("c:\\temp\\logs\\TestElement.log", true, true);
         logHandler = new StdoutLogHandler(true);
-        eyes.setLogHandler(logHandler);
+        //eyes.setLogHandler(logHandler);
         eyes.setForceFullPageScreenshot(forceFullPageScreenshot);
         eyes.setStitchMode(StitchMode.CSS);
 

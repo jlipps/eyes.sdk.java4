@@ -93,4 +93,8 @@ public abstract class EyesScreenshot {
 
         return new Region(updatedLocation, region.getSize());
     }
+
+    public Region getRelevantRegion() {
+        return new Region(0,0,image.getWidth(), image.getHeight());
+    }
 }

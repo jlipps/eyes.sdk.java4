@@ -680,6 +680,8 @@ public class Eyes extends EyesBase {
         if (stitchContent) {
             this.checkFullFrameOrElement(name, checkSettings);
         } else {
+            scrollIntoViewport();
+
             Frame frame = this.driver.getFrameChain().peek();
             final WebElement element = frame.getReference();
             this.driver.switchTo().parentFrame();
@@ -745,24 +747,30 @@ public class Eyes extends EyesBase {
             @Override
             public Region getRegion() {
                 if (checkFrameOrElement) {
-                    ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
-                    spp.setPosition(Location.ZERO);
+
+                    FrameChain fc = ensureFrameVisible();
 
                     // FIXME - Scaling should be handled in a single place instead
                     ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
                     BufferedImage screenshotImage = imageProvider.getImage();
-                    //byte[] screenshotBytes = driver.getScreenshotAs(OutputType.BYTES);
-                    //BufferedImage screenshotImage = ImageUtils.imageFromBytes(screenshotBytes);
 
-                    debugScreenshotsProvider.save(screenshotImage, "checkFulFrameOrElement");
+                    debugScreenshotsProvider.save(screenshotImage, "checkFullFrameOrElement");
 
                     scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
+
+                    WebDriver.TargetLocator switchTo = driver.switchTo();
+                    switchTo.defaultContent();
+                    for (Frame frame : fc) {
+                        switchTo.frame(frame.getReference());
+                    }
 
                     final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
 
                     logger.verbose("replacing regionToCheck");
-                    regionToCheck = screenshot.getFrameWindow();
+                    setRegionToCheck(screenshot.getFrameWindow());
+
+                    //((EyesTargetLocator)driver.switchTo()).frames(fc);
                 }
 
                 return Region.EMPTY;
@@ -770,6 +778,19 @@ public class Eyes extends EyesBase {
         }, name, false, checkSettings);
 
         checkFrameOrElement = false;
+    }
+
+    protected FrameChain ensureFrameVisible() {
+        ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
+
+        FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
+        FrameChain fc = new FrameChain(logger, driver.getFrameChain());
+        while (fc.size() > 0) {
+            driver.getRemoteWebDriver().switchTo().parentFrame();
+            Frame frame = fc.pop();
+            spp.setPosition(frame.getLocation());
+        }
+        return originalFC;
     }
 
     private void checkRegion(WebElement element, String name, ICheckSettings checkSettings) {
@@ -1315,7 +1336,7 @@ public class Eyes extends EyesBase {
             logger.verbose("Done!");
 
             logger.verbose("replacing regionToCheck");
-            regionToCheck = screenshot.getFrameWindow();
+            setRegionToCheck(screenshot.getFrameWindow());
 
             super.checkWindowBase(NullRegionProvider.INSTANCE, tag, false, matchTimeout);
         } finally {
@@ -1810,7 +1831,7 @@ public class Eyes extends EyesBase {
      */
     @Override
     public RectangleSize getViewportSize() {
-        return driver.getDefaultContentViewportSize();
+        return viewportSizeHandler.get();
     }
 
     /**
@@ -1887,6 +1908,9 @@ public class Eyes extends EyesBase {
             EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
             if (checkFrameOrElement) {
                 logger.verbose("Check frame/element requested");
+
+                scrollIntoViewport();
+
                 FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
                 BufferedImage entireFrameOrElement =
                         algo.getStitchedRegion(imageProvider, regionToCheck,
@@ -1895,6 +1919,7 @@ public class Eyes extends EyesBase {
                                 cutProviderHandler.get(),
                                 getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
                                 getStitchOverlap(), regionPositionCompensation);
+
                 logger.verbose("Building screenshot object...");
                 result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
                         new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
@@ -1917,6 +1942,8 @@ public class Eyes extends EyesBase {
                 ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
                 result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
             } else {
+                scrollIntoViewport();
+
                 logger.verbose("Screenshot requested...");
                 BufferedImage screenshotImage = imageProvider.getImage();
                 logger.verbose("Done! Creating image object...");
@@ -1948,6 +1975,13 @@ public class Eyes extends EyesBase {
                 }
             }
         }
+    }
+
+    private void scrollIntoViewport() {
+        //if (regionToCheck != null) {
+            FrameChain fc = new FrameChain(logger, this.driver.getFrameChain());
+            EyesWebDriverScreenshot.scrollIntoView(logger, driver, fc, EyesWebDriverScreenshot.ScreenshotType.VIEWPORT);
+        //}
     }
 
     @Override

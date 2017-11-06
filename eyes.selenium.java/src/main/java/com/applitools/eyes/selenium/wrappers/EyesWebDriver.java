@@ -214,7 +214,12 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
     public TargetLocator switchTo() {
         logger.verbose("switchTo()");
-        return new EyesTargetLocator(logger, this, driver.switchTo());
+        return new EyesTargetLocator(logger, this, driver.switchTo(), true);
+    }
+
+    public TargetLocator switchToNoScroll() {
+        logger.verbose("switchTo()");
+        return new EyesTargetLocator(logger, this, driver.switchTo(), false);
     }
 
     public Navigation navigate() {
@@ -337,7 +342,8 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
         logger.verbose("Done! Viewport size: " + defaultContentViewportSize);
 
         if (currentFrames.size() > 0) {
-            ((EyesTargetLocator) switchTo()).frames(currentFrames);
+            //((EyesTargetLocator) switchTo()).frames(currentFrames);
+            ((EyesTargetLocator) switchTo()).framesNoScroll(currentFrames);
         }
         return defaultContentViewportSize;
     }
@@ -347,7 +353,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
      * {@code forceQuery} defaults to {@code false}.
      */
     public RectangleSize getDefaultContentViewportSize() {
-        return getDefaultContentViewportSize(false);
+        return getDefaultContentViewportSize(true);
     }
 
     /**

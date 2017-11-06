@@ -31,7 +31,8 @@ public class TestFluentApi_Chrome extends TestFluentApi {
         @Override
         public Statement apply(Statement statement, Description description) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("disable-infobars", "headless");
+            options.addArguments("disable-infobars");
+            //options.addArguments("headless");
 
             //Run locally
             //-----------

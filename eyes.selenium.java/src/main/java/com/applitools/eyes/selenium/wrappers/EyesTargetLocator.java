@@ -32,6 +32,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
     private final SeleniumJavaScriptExecutor jsExecutor;
     private final ScrollPositionProvider scrollPosition;
     private final WebDriver.TargetLocator targetLocator;
+    private boolean autoScroll;
 
     /**
      * Will be called before switching into a frame.
@@ -56,16 +57,20 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
 
         Location originalLocation = scrollPosition.getCurrentPosition();
 
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        String eyesSeleniumClassName = Eyes.class.getName();
-        for (StackTraceElement stackFrame : stackTrace) {
-            String currentStackFrameClassName = stackFrame.getClassName();
-            if (currentStackFrameClassName.equals(eyesSeleniumClassName) &&
-                    stackFrame.getMethodName().startsWith("check")) {
-                scrollPosition.setPosition(contentLocation);
-                break;
+        /*
+        if (autoScroll) {
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            String eyesSeleniumClassName = Eyes.class.getName();
+            for (StackTraceElement stackFrame : stackTrace) {
+                String currentStackFrameClassName = stackFrame.getClassName();
+                if (currentStackFrameClassName.equals(eyesSeleniumClassName) &&
+                        stackFrame.getMethodName().startsWith("check")) {
+                    scrollPosition.setPosition(contentLocation);
+                    break;
+                }
             }
         }
+        */
 
         Location currentLocation = scrollPosition.getCurrentPosition();
 
@@ -85,13 +90,15 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
      * @param targetLocator The actual TargetLocator object.
      */
     public EyesTargetLocator(Logger logger, EyesWebDriver driver,
-                             WebDriver.TargetLocator targetLocator) {
+                             WebDriver.TargetLocator targetLocator,
+                             boolean autoScroll) {
         ArgumentGuard.notNull(logger, "logger");
         ArgumentGuard.notNull(driver, "driver");
         ArgumentGuard.notNull(targetLocator, "targetLocator");
         this.logger = logger;
         this.driver = driver;
         this.targetLocator = targetLocator;
+        this.autoScroll = autoScroll;
         this.jsExecutor = new SeleniumJavaScriptExecutor(driver);
         this.scrollPosition = new ScrollPositionProvider(logger, jsExecutor);
     }
@@ -176,6 +183,21 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
             logger.verbose("Done! Switching to frame...");
             driver.switchTo().frame(frame.getReference());
             logger.verbose("Done!");
+        }
+        logger.verbose("Done switching into nested frames!");
+        return driver;
+    }
+
+    /**
+     * Switches into every frame in the frame chain. This is used as way to
+     * switch into nested frames (while considering scroll) in a single call.
+     * @param frameChain The path to the frame to switch to.
+     * @return The WebDriver with the switched context.
+     */
+    public WebDriver framesNoScroll(FrameChain frameChain) {
+        logger.verbose("EyesTargetLocator.frames(frameChain)");
+        for (Frame frame : frameChain) {
+            driver.switchToNoScroll().frame(frame.getReference());
         }
         logger.verbose("Done switching into nested frames!");
         return driver;

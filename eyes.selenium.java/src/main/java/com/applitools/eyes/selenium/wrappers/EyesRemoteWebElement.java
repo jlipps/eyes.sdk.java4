@@ -107,7 +107,7 @@ public class EyesRemoteWebElement extends RemoteWebElement {
             top = 0;
         }
 
-        return new Region(left, top, width, height);
+        return new Region(left, top, width, height, CoordinatesType.CONTEXT_RELATIVE);
     }
 
     /**

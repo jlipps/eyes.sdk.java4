@@ -11,6 +11,7 @@ import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
 import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
+import com.applitools.eyes.selenium.wrappers.EyesTargetLocator;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
@@ -24,7 +25,7 @@ import java.util.Iterator;
 
 public class EyesWebDriverScreenshot extends EyesScreenshot {
 
-    private enum ScreenshotType {VIEWPORT, ENTIRE_FRAME}
+    public enum ScreenshotType {VIEWPORT, ENTIRE_FRAME}
 
     private final Logger logger;
     private final EyesWebDriver driver;
@@ -61,10 +62,32 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         return defaultContentScrollPosition;
     }
 
-    public static Location calcFrameLocationInScreenshot(Logger logger, EyesWebDriver driver,
-                                                   FrameChain frameChain, ScreenshotType screenshotType) {
+    public static void scrollIntoView(Logger logger, EyesWebDriver driver, FrameChain frameChain, ScreenshotType screenshotType) {
+        IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(driver);
+        ScrollPositionProvider positionProvider = new ScrollPositionProvider(logger, jsExecutor);
+        WebDriver.TargetLocator switchTo = driver.switchToNoScroll();
 
-        logger.verbose("Getting first frame..");
+        switchTo.defaultContent();
+
+        logger.verbose("Iterating over frames...");
+        for (Frame frame : frameChain) {
+            Location frameLocation = frame.getLocation();
+
+            // For inner frames we must consider the scroll
+            Location frameParentScrollPosition = frame.getParentScrollPosition();
+
+            positionProvider.setPosition(frameLocation);
+            WebElement frameReference = frame.getReference();
+            switchTo.frame(frameReference);
+        }
+
+        logger.verbose("Done!");
+    }
+
+    public static Location calcFrameLocationInScreenshot(Logger logger, EyesWebDriver driver,
+                                                         FrameChain frameChain, ScreenshotType screenshotType) {
+
+        logger.verbose("Getting first frame...");
         Iterator<Frame> frameIterator = frameChain.iterator();
         Frame firstFrame = frameIterator.next();
         logger.verbose("Done!");
@@ -128,6 +151,8 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
             throw new EyesException("Got empty frame window for screenshot!");
         }
 
+        //this.driver.getEyes().setRegionToCheck(this.frameWindow);
+
         logger.verbose("Done!");
     }
 
@@ -170,7 +195,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
     private ScreenshotType updateScreenshotType(ScreenshotType screenshotType, BufferedImage image) {
         if (screenshotType == null) {
-            RectangleSize viewportSize = driver.getDefaultContentViewportSize();
+            RectangleSize viewportSize = driver.getEyes().getViewportSize();
 
             boolean scaleViewport = driver.getEyes().shouldStitchContent();
 
@@ -232,6 +257,11 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
      * in screenshot coordinates.
      */
     public Region getFrameWindow() {
+        return frameWindow;
+    }
+
+    @Override
+    public Region getRelevantRegion() {
         return frameWindow;
     }
 
