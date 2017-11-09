@@ -126,7 +126,7 @@ public class Eyes extends EyesBase {
 
     @Override
     public String getBaseAgentId() {
-        return "eyes.selenium.java/3.21";
+        return "eyes.selenium.java/4.0";
     }
 
     public WebDriver getDriver() {
