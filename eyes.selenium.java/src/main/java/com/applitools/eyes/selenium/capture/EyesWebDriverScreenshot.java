@@ -73,9 +73,6 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         for (Frame frame : frameChain) {
             Location frameLocation = frame.getLocation();
 
-            // For inner frames we must consider the scroll
-            Location frameParentScrollPosition = frame.getParentScrollPosition();
-
             positionProvider.setPosition(frameLocation);
             WebElement frameReference = frame.getReference();
             switchTo.frame(frameReference);
@@ -135,7 +132,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         this.screenshotType = updateScreenshotType(screenshotType, image);
 
         IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
-        ScrollPositionProvider positionProvider = new ScrollPositionProvider(logger, jsExecutor);
+        PositionProvider positionProvider = driver.getEyes().getPositionProvider();//new ScrollPositionProvider(logger, jsExecutor);
 
         frameChain = driver.getFrameChain();
         RectangleSize frameSize = getFrameSize(positionProvider);
@@ -170,13 +167,16 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         Location sp;
         try {
             sp = positionProvider.getCurrentPosition();
+            if (sp == null) {
+                sp = new Location(0,0);
+            }
         } catch (EyesDriverOperationException e) {
             sp = new Location(0, 0);
         }
         return sp;
     }
 
-    private RectangleSize getFrameSize(ScrollPositionProvider positionProvider) {
+    private RectangleSize getFrameSize(PositionProvider positionProvider) {
         RectangleSize frameSize;
         if (frameChain.size() != 0) {
             frameSize = frameChain.getCurrentFrameInnerSize();

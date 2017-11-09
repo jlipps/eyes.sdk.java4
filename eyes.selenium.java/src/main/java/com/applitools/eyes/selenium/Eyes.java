@@ -45,7 +45,6 @@ import java.util.List;
  * The main API gateway for the SDK.
  */
 public class Eyes extends EyesBase {
-
     public interface WebDriverAction {
         void drive(WebDriver driver);
     }
@@ -91,6 +90,7 @@ public class Eyes extends EyesBase {
     private UserAgent userAgent;
     private ImageProvider imageProvider;
     private RegionPositionCompensation regionPositionCompensation;
+    private WebElement targetElement = null;
 
     private boolean stitchContent = false;
 
@@ -654,11 +654,13 @@ public class Eyes extends EyesBase {
                 targetElement = this.driver.findElement(targetSelector);
             }
             if (targetElement != null) {
+                this.targetElement = targetElement;
                 if (stitchContent) {
                     this.checkElement(targetElement, name, checkSettings);
                 } else {
                     this.checkRegion(targetElement, name, checkSettings);
                 }
+                this.targetElement = null;
             } else if (seleniumCheckTarget.getFrameChain().size() > 0) {
                 switchedToFrameCount = checkFrameFluent(name, checkSettings, switchedToFrameCount);
             } else {
@@ -680,7 +682,25 @@ public class Eyes extends EyesBase {
         if (stitchContent) {
             this.checkFullFrameOrElement(name, checkSettings);
         } else {
-            scrollIntoViewport();
+
+            final FrameChain frameChain = new FrameChain(logger, this.driver.getFrameChain());
+            final Frame targetFrame = frameChain.pop();
+            this.targetElement = targetFrame.getReference();
+
+            this.checkWindowBase(new RegionProvider() {
+                @Override
+                public Region getRegion() {
+                    EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+                    switchTo.frames(frameChain);
+                    Point p = targetElement.getLocation();
+                    Dimension d = targetElement.getSize();
+                    return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+                }
+            }, name, false, checkSettings);
+
+            this.targetElement = null;
+
+            /*scrollIntoViewport();
 
             Frame frame = this.driver.getFrameChain().peek();
             final WebElement element = frame.getReference();
@@ -694,7 +714,7 @@ public class Eyes extends EyesBase {
                     Dimension d = element.getSize();
                     return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
                 }
-            }, name, false, checkSettings);
+            }, name, false, checkSettings);*/
         }
         return switchedToFrameCount;
     }
@@ -781,16 +801,72 @@ public class Eyes extends EyesBase {
     }
 
     protected FrameChain ensureFrameVisible() {
-        ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
-
         FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
         FrameChain fc = new FrameChain(logger, driver.getFrameChain());
         while (fc.size() > 0) {
             driver.getRemoteWebDriver().switchTo().parentFrame();
             Frame frame = fc.pop();
-            spp.setPosition(frame.getLocation());
+            this.positionProvider.setPosition(frame.getLocation());
         }
         return originalFC;
+    }
+
+    protected FrameChain ensureElementVisible(WebElement element) {
+
+        FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
+
+        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
+
+        if (element != null) {
+            EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, driver, element);
+            Region elementBounds = eyesRemoteWebElement.getBounds();
+
+            FrameChain fc = new FrameChain(logger, driver.getFrameChain());
+            Location location = new Location(0,0);
+            while (fc.size() > 0) {
+                Frame frame = fc.pop();
+                location = location.offset(frame.getLocation());
+            }
+
+            elementBounds = elementBounds.offset(location.getX(), location.getY());
+
+            Region viewportBounds = getViewportScrollBounds();
+
+            if (viewportBounds.contains(elementBounds)) {
+                return originalFC;
+            }
+        }
+
+        originalFC = ensureFrameVisible();
+        switchTo.frames(originalFC);
+
+        if (element != null) {
+            Point p = element.getLocation();
+            Location elementLocation = new Location(p.getX(), p.getY());
+
+            if (originalFC.size() > 0 && !element.equals(originalFC.peek())) {
+                switchTo.framesNoScroll(originalFC);
+
+                this.positionProvider.setPosition(elementLocation);
+
+                switchTo.defaultContent();
+            } else {
+                this.positionProvider.setPosition(elementLocation);
+            }
+        }
+
+        return originalFC;
+    }
+
+    private Region getViewportScrollBounds() {
+        FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
+        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
+        switchTo.defaultContent();
+        ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
+        Location location = spp.getCurrentPosition();
+        Region viewportBounds = new Region(location, getViewportSize());
+        switchTo.framesNoScroll(originalFrameChain);
+        return viewportBounds;
     }
 
     private void checkRegion(WebElement element, String name, ICheckSettings checkSettings) {
@@ -1831,7 +1907,11 @@ public class Eyes extends EyesBase {
      */
     @Override
     public RectangleSize getViewportSize() {
-        return viewportSizeHandler.get();
+        RectangleSize viewportSize = viewportSizeHandler.get();
+        if (viewportSize == null) {
+            viewportSize = driver.getDefaultContentViewportSize();
+        }
+        return viewportSize;
     }
 
     /**
@@ -1942,7 +2022,8 @@ public class Eyes extends EyesBase {
                 ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
                 result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
             } else {
-                scrollIntoViewport();
+                //scrollIntoViewport();
+                ensureElementVisible(this.targetElement);
 
                 logger.verbose("Screenshot requested...");
                 BufferedImage screenshotImage = imageProvider.getImage();
@@ -1979,8 +2060,8 @@ public class Eyes extends EyesBase {
 
     private void scrollIntoViewport() {
         //if (regionToCheck != null) {
-            FrameChain fc = new FrameChain(logger, this.driver.getFrameChain());
-            EyesWebDriverScreenshot.scrollIntoView(logger, driver, fc, EyesWebDriverScreenshot.ScreenshotType.VIEWPORT);
+        FrameChain fc = new FrameChain(logger, this.driver.getFrameChain());
+        EyesWebDriverScreenshot.scrollIntoView(logger, driver, fc, EyesWebDriverScreenshot.ScreenshotType.VIEWPORT);
         //}
     }
 

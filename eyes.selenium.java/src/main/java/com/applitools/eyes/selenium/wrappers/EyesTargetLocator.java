@@ -177,6 +177,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
      */
     public WebDriver frames(FrameChain frameChain) {
         logger.verbose("EyesTargetLocator.frames(frameChain)");
+        driver.switchTo().defaultContent();
         for (Frame frame : frameChain) {
             logger.verbose("Scrolling by parent scroll position...");
             scrollPosition.setPosition(frame.getParentScrollPosition());
@@ -196,6 +197,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
      */
     public WebDriver framesNoScroll(FrameChain frameChain) {
         logger.verbose("EyesTargetLocator.frames(frameChain)");
+        driver.switchTo().defaultContent();
         for (Frame frame : frameChain) {
             driver.switchToNoScroll().frame(frame.getReference());
         }

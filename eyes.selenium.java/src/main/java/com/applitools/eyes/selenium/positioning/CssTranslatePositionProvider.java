@@ -48,11 +48,13 @@ public class CssTranslatePositionProvider implements PositionProvider {
 
     public PositionMemento getState() {
         return new CssTranslatePositionMemento(
-                EyesSeleniumUtils.getCurrentTransform(executor));
+                EyesSeleniumUtils.getCurrentTransform(executor),
+                lastSetPosition);
     }
 
     public void restoreState(PositionMemento state) {
         EyesSeleniumUtils.setTransforms(executor,
                 ((CssTranslatePositionMemento)state).getTransform());
+        lastSetPosition = ((CssTranslatePositionMemento)state).getPosition();
     }
 }
