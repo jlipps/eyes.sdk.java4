@@ -126,7 +126,7 @@ public class FrameChain implements Iterable<Frame>{
         Location result = new Location(0 ,0);
 
         for (Frame frame: frames) {
-            result.offset(frame.getLocation());
+            result = result.offset(frame.getLocation());
         }
 
         return result;
