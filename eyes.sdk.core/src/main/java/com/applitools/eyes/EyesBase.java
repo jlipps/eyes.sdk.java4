@@ -1543,7 +1543,7 @@ public abstract class EyesBase {
     }
 
     /**
-     * @param region         A callback for getting the region of the screenshot which will be set in the application output.
+     * @param region         The region of the screenshot which will be set in the application output.
      * @param lastScreenshot Previous application screenshot (used for compression) or {@code null} if not available.
      * @return The updated app output and screenshot.
      */
