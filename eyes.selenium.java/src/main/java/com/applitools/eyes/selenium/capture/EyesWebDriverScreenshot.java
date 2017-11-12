@@ -17,7 +17,6 @@ import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
 import java.awt.image.BufferedImage;
@@ -25,7 +24,7 @@ import java.util.Iterator;
 
 public class EyesWebDriverScreenshot extends EyesScreenshot {
 
-    public enum ScreenshotType {VIEWPORT, ENTIRE_FRAME}
+    private enum ScreenshotType {VIEWPORT, ENTIRE_FRAME}
 
     private final Logger logger;
     private final EyesWebDriver driver;
@@ -56,12 +55,6 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         switchTo.frames(originalFC);
 
         return defaultContentScrollPosition;
-    }
-
-    public static void scrollIntoView(Logger logger, EyesWebDriver driver, FrameChain frameChain, ScreenshotType screenshotType) {
-        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
-        switchTo.framesDoScroll(frameChain);
-        logger.verbose("Done!");
     }
 
     public static Location calcFrameLocationInScreenshot(Logger logger, EyesWebDriver driver,
@@ -95,6 +88,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
                     frameLocation.getY() - frameParentScrollPosition.getY());
         }
         logger.verbose("Done!");
+
         return locationInScreenshot;
     }
 
@@ -115,8 +109,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         this.screenshotType = updateScreenshotType(screenshotType, image);
 
-        //IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
-        PositionProvider positionProvider = driver.getEyes().getPositionProvider();//new ScrollPositionProvider(logger, jsExecutor);
+        PositionProvider positionProvider = driver.getEyes().getPositionProvider();
 
         frameChain = driver.getFrameChain();
         RectangleSize frameSize = getFrameSize(positionProvider);
@@ -131,8 +124,6 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         if (this.frameWindow.getWidth() <= 0 || this.frameWindow.getHeight() <= 0) {
             throw new EyesException("Got empty frame window for screenshot!");
         }
-
-        //this.driver.getEyes().setRegionToCheck(this.frameWindow);
 
         logger.verbose("Done!");
     }

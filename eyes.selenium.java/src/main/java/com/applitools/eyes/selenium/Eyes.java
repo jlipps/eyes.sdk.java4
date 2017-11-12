@@ -763,7 +763,7 @@ public class Eyes extends EyesBase {
 
                     scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
 
-                    EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
+                    EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
                     switchTo.frames(fc);
 
                     final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
@@ -787,29 +787,24 @@ public class Eyes extends EyesBase {
             Frame frame = fc.pop();
             this.positionProvider.setPosition(frame.getLocation());
         }
-        ((EyesTargetLocator)driver.switchTo()).frames(originalFC);
+        ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
         return originalFC;
     }
 
-    protected FrameChain ensureElementVisible(WebElement element) {
+    protected void ensureElementVisible(WebElement element) {
 
         FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
-
         EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
 
-        if (element != null) {
-            EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, driver, element);
-            Region elementBounds = eyesRemoteWebElement.getBounds();
+        EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, driver, element);
+        Region elementBounds = eyesRemoteWebElement.getBounds();
 
-            Location currentFrameOffset = originalFC.getCurrentFrameOffset();
-            elementBounds = elementBounds.offset(currentFrameOffset.getX(), currentFrameOffset.getY());
+        Location currentFrameOffset = originalFC.getCurrentFrameOffset();
+        elementBounds = elementBounds.offset(currentFrameOffset.getX(), currentFrameOffset.getY());
 
-            Region viewportBounds = getViewportScrollBounds();
+        Region viewportBounds = getViewportScrollBounds();
 
-            if (viewportBounds.contains(elementBounds)) {
-                return originalFC;
-            }
-
+        if (!viewportBounds.contains(elementBounds)) {
             ensureFrameVisible();
 
             Point p = element.getLocation();
@@ -821,8 +816,6 @@ public class Eyes extends EyesBase {
 
             this.positionProvider.setPosition(elementLocation);
         }
-
-        return originalFC;
     }
 
     private Region getViewportScrollBounds() {
@@ -1953,12 +1946,16 @@ public class Eyes extends EyesBase {
         }
         try {
             EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
+
+            FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
+            FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
+            EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+
             if (checkFrameOrElement) {
                 logger.verbose("Check frame/element requested");
 
-                scrollIntoViewport();
+                switchTo.framesDoScroll(originalFrameChain);
 
-                FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
                 BufferedImage entireFrameOrElement =
                         algo.getStitchedRegion(imageProvider, regionToCheck,
                                 positionProvider, getElementPositionProvider(),
@@ -1974,22 +1971,24 @@ public class Eyes extends EyesBase {
                 logger.verbose("Full page screenshot requested.");
 
                 // Save the current frame path.
-                FrameChain originalFrame = new FrameChain(logger, driver.getFrameChain());
-                Location originalFramePosition = originalFrame.size() > 0 ? originalFrame.getDefaultContentScrollPosition() : new Location(0, 0);
+                Location originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);
 
-                driver.switchTo().defaultContent();
-                FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
-                BufferedImage fullPageImage = algo.getStitchedRegion(imageProvider, Region.EMPTY,
-                        new ScrollPositionProvider(logger, this.jsExecutor),
-                        positionProvider, scaleProviderFactory,
-                        cutProviderHandler.get(),
-                        getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                        getStitchOverlap(), regionPositionCompensation);
+                switchTo.defaultContent();
 
-                ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
+                BufferedImage fullPageImage =
+                        algo.getStitchedRegion(imageProvider, Region.EMPTY,
+                                new ScrollPositionProvider(logger, this.jsExecutor),
+                                positionProvider, scaleProviderFactory,
+                                cutProviderHandler.get(),
+                                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
+                                getStitchOverlap(), regionPositionCompensation);
+
+                switchTo.frames(originalFrameChain);
                 result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
             } else {
-                ensureElementVisible(this.targetElement);
+                if (this.targetElement != null) {
+                    ensureElementVisible(this.targetElement);
+                }
 
                 logger.verbose("Screenshot requested...");
                 BufferedImage screenshotImage = imageProvider.getImage();
@@ -2022,13 +2021,6 @@ public class Eyes extends EyesBase {
                 }
             }
         }
-    }
-
-    private void scrollIntoViewport() {
-        //if (regionToCheck != null) {
-        FrameChain fc = new FrameChain(logger, this.driver.getFrameChain());
-        EyesWebDriverScreenshot.scrollIntoView(logger, driver, fc, EyesWebDriverScreenshot.ScreenshotType.VIEWPORT);
-        //}
     }
 
     @Override
