@@ -48,41 +48,26 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
             return positionProvider.getCurrentPosition();
         }
 
-        WebDriver.TargetLocator switchTo = driver.getRemoteWebDriver().switchTo();
+        FrameChain originalFC = new FrameChain(logger, currentFrames);
 
+        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
         switchTo.defaultContent();
-
         Location defaultContentScrollPosition = positionProvider.getCurrentPosition();
-
-        for (Frame frame : currentFrames) {
-            WebElement frameElement = frame.getReference();
-            switchTo.frame(frameElement);
-        }
+        switchTo.frames(originalFC);
 
         return defaultContentScrollPosition;
     }
 
     public static void scrollIntoView(Logger logger, EyesWebDriver driver, FrameChain frameChain, ScreenshotType screenshotType) {
-        IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(driver);
-        ScrollPositionProvider positionProvider = new ScrollPositionProvider(logger, jsExecutor);
-        WebDriver.TargetLocator switchTo = driver.switchToNoScroll();
-
-        switchTo.defaultContent();
-
-        logger.verbose("Iterating over frames...");
-        for (Frame frame : frameChain) {
-            Location frameLocation = frame.getLocation();
-
-            positionProvider.setPosition(frameLocation);
-            WebElement frameReference = frame.getReference();
-            switchTo.frame(frameReference);
-        }
-
+        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
+        switchTo.framesDoScroll(frameChain);
         logger.verbose("Done!");
     }
 
     public static Location calcFrameLocationInScreenshot(Logger logger, EyesWebDriver driver,
                                                          FrameChain frameChain, ScreenshotType screenshotType) {
+
+        Location windowScroll = getDefaultContentScrollPosition(logger, frameChain, driver);
 
         logger.verbose("Getting first frame...");
         Iterator<Frame> frameIterator = frameChain.iterator();
@@ -92,7 +77,6 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         // We only consider scroll of the default content if this is a viewport screenshot.
         if (screenshotType == ScreenshotType.VIEWPORT) {
-            Location windowScroll = getDefaultContentScrollPosition(logger, frameChain, driver);
             locationInScreenshot = locationInScreenshot.offset(-windowScroll.getX(), -windowScroll.getY());
         }
 
@@ -131,7 +115,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         this.screenshotType = updateScreenshotType(screenshotType, image);
 
-        IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
+        //IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
         PositionProvider positionProvider = driver.getEyes().getPositionProvider();//new ScrollPositionProvider(logger, jsExecutor);
 
         frameChain = driver.getFrameChain();

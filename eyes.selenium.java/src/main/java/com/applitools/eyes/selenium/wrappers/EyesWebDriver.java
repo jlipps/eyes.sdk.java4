@@ -214,12 +214,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
     public TargetLocator switchTo() {
         logger.verbose("switchTo()");
-        return new EyesTargetLocator(logger, this, driver.switchTo(), true);
-    }
-
-    public TargetLocator switchToNoScroll() {
-        logger.verbose("switchTo()");
-        return new EyesTargetLocator(logger, this, driver.switchTo(), false);
+        return new EyesTargetLocator(logger, this, driver.switchTo());
     }
 
     public Navigation navigate() {
@@ -330,11 +325,12 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
             return defaultContentViewportSize;
         }
 
+        EyesTargetLocator switchTo = (EyesTargetLocator)switchTo();
         FrameChain currentFrames = new FrameChain(logger, getFrameChain());
 
         // Optimization
         if (currentFrames.size() > 0) {
-            switchTo().defaultContent();
+            switchTo.defaultContent();
         }
 
         logger.verbose("Extracting viewport size...");
@@ -342,8 +338,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
         logger.verbose("Done! Viewport size: " + defaultContentViewportSize);
 
         if (currentFrames.size() > 0) {
-            //((EyesTargetLocator) switchTo()).frames(currentFrames);
-            ((EyesTargetLocator) switchTo()).framesNoScroll(currentFrames);
+            switchTo.frames(currentFrames);
         }
         return defaultContentViewportSize;
     }
