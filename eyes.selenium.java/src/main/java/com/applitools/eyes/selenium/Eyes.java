@@ -683,8 +683,8 @@ public class Eyes extends EyesBase {
     }
 
     protected void checkFrameFluent(String name, ICheckSettings checkSettings) {
-        final FrameChain frameChain = new FrameChain(logger, this.driver.getFrameChain());
-        final Frame targetFrame = frameChain.pop();
+        FrameChain frameChain = new FrameChain(logger, this.driver.getFrameChain());
+        Frame targetFrame = frameChain.pop();
         this.targetElement = targetFrame.getReference();
 
         EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
@@ -771,7 +771,7 @@ public class Eyes extends EyesBase {
         checkFrameOrElement = false;
     }
 
-    protected FrameChain ensureFrameVisible() {
+    private FrameChain ensureFrameVisible() {
         FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
         FrameChain fc = new FrameChain(logger, driver.getFrameChain());
         while (fc.size() > 0) {
@@ -783,7 +783,11 @@ public class Eyes extends EyesBase {
         return originalFC;
     }
 
-    protected void ensureElementVisible(WebElement element) {
+    private void ensureElementVisible(WebElement element) {
+        if (this.targetElement == null) {
+            // No element? we must be checking the window.
+            return;
+        }
 
         FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
         EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
@@ -1646,7 +1650,7 @@ public class Eyes extends EyesBase {
 
         String originalOverflow = null;
 
-        Point p = eyesElement.getLocation();
+        Point pl = eyesElement.getLocation();
 
         try {
             checkFrameOrElement = true;
@@ -1660,13 +1664,14 @@ public class Eyes extends EyesBase {
             originalOverflow = eyesElement.getOverflow();
             eyesElement.setOverflow("hidden");
 
-            int borderLeftWidth = eyesElement.getComputedStyleInteger("border-left-width");
-            int borderTopWidth = eyesElement.getComputedStyleInteger("border-top-width");
-
             int elementWidth = eyesElement.getClientWidth();
             int elementHeight = eyesElement.getClientHeight();
 
-            final Region elementRegion = new Region(p.getX() + borderLeftWidth, p.getY() + borderTopWidth,
+            int borderLeftWidth = eyesElement.getComputedStyleInteger("border-left-width");
+            int borderTopWidth = eyesElement.getComputedStyleInteger("border-top-width");
+
+            final Region elementRegion = new Region(
+                    pl.getX() + borderLeftWidth, pl.getY() + borderTopWidth,
                     elementWidth, elementHeight, CoordinatesType.CONTEXT_RELATIVE);
 
             logger.verbose("Element region: " + elementRegion);
@@ -1976,25 +1981,25 @@ public class Eyes extends EyesBase {
                 switchTo.frames(originalFrameChain);
                 result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
             } else {
-                if (this.targetElement != null) {
-                    ensureElementVisible(this.targetElement);
-                }
+                ensureElementVisible(this.targetElement);
 
                 logger.verbose("Screenshot requested...");
                 BufferedImage screenshotImage = imageProvider.getImage();
-                logger.verbose("Done! Creating image object...");
-
                 debugScreenshotsProvider.save(screenshotImage, "original");
 
                 ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
-                logger.verbose("Done!");
-                screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
+                if (scaleProvider.getScaleRatio()!=1.0) {
+                    logger.verbose("scaling...");
+                    screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
+                    debugScreenshotsProvider.save(screenshotImage, "scaled");
+                }
 
-                debugScreenshotsProvider.save(screenshotImage, "scaled");
-
-                screenshotImage = cutProviderHandler.get().cut(screenshotImage);
-
-                debugScreenshotsProvider.save(screenshotImage, "cut");
+                CutProvider cutProvider = cutProviderHandler.get();
+                if (!(cutProvider instanceof NullCutProvider)) {
+                    logger.verbose("cutting...");
+                    screenshotImage = cutProvider.cut(screenshotImage);
+                    debugScreenshotsProvider.save(screenshotImage, "cut");
+                }
 
                 logger.verbose("Creating screenshot object...");
                 result = new EyesWebDriverScreenshot(logger, driver, screenshotImage);

@@ -96,8 +96,10 @@ public class FullPageCaptureAlgorithm {
 
         // FIXME - cropping should be overlaid, so a single cut provider will only handle a single part of the image.
         cutProvider = cutProvider.scale(pixelRatio);
-        image = cutProvider.cut(image);
-        debugScreenshotsProvider.save(image, "original-cut");
+        if (!(cutProvider instanceof NullCutProvider)) {
+            image = cutProvider.cut(image);
+            debugScreenshotsProvider.save(image, "original-cut");
+        }
 
         logger.verbose("Done! Creating screenshot object...");
         // We need the screenshot to be able to convert the region to screenshot coordinates.
@@ -117,8 +119,10 @@ public class FullPageCaptureAlgorithm {
             saveDebugScreenshotPart(debugScreenshotsProvider, image, region, "cropped");
         }
 
-        image = ImageUtils.scaleImage(image, scaleProvider);
-        debugScreenshotsProvider.save(image, "scaled");
+        if (pixelRatio != 1.0) {
+            image = ImageUtils.scaleImage(image, scaleProvider);
+            debugScreenshotsProvider.save(image, "scaled");
+        }
 
         RectangleSize entireSize;
         try {
@@ -199,22 +203,27 @@ public class FullPageCaptureAlgorithm {
                     "original-scrolled-" + positionProvider.getCurrentPosition().toStringForFilename());
 
             // FIXME - cropping should be overlaid (see previous comment re cropping)
-            partImage = cutProvider.cut(partImage);
-            debugScreenshotsProvider.save(partImage,
-                    "original-scrolled-cut-" + positionProvider.getCurrentPosition().toStringForFilename());
-
-            logger.verbose("Done!");
+            if (!(cutProvider instanceof NullCutProvider)) {
+                logger.verbose("cutting...");
+                partImage = cutProvider.cut(partImage);
+                debugScreenshotsProvider.save(partImage,
+                        "original-scrolled-cut-" + positionProvider.getCurrentPosition().toStringForFilename());
+            }
 
             if (!regionInScreenshot.isEmpty()) {
+                logger.verbose("cropping...");
                 partImage = ImageUtils.getImagePart(partImage, regionInScreenshot);
                 saveDebugScreenshotPart(debugScreenshotsProvider, partImage, partRegion, "original-scrolled-"
                         + positionProvider.getCurrentPosition().toStringForFilename());
             }
 
-            // FIXME - scaling should be refactored
-            partImage = ImageUtils.scaleImage(partImage, scaleProvider);
-            saveDebugScreenshotPart(debugScreenshotsProvider, partImage, partRegion,
-                    "original-scrolled-" + positionProvider.getCurrentPosition().toStringForFilename() + "-scaled-");
+            if (pixelRatio != 1.0) {
+                logger.verbose("scaling...");
+                // FIXME - scaling should be refactored
+                partImage = ImageUtils.scaleImage(partImage, scaleProvider);
+                saveDebugScreenshotPart(debugScreenshotsProvider, partImage, partRegion,
+                        "original-scrolled-" + positionProvider.getCurrentPosition().toStringForFilename() + "-scaled-");
+            }
 
             // Stitching the current part.
             logger.verbose("Stitching part into the image container...");
