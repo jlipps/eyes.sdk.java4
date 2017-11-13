@@ -19,6 +19,7 @@ public class TestResults {
     private int noneMatches;
     private String url;
     private boolean isNew;
+    private TestResultsStatus status;
 
     /**
      * @return The total number of test steps.
@@ -107,12 +108,19 @@ public class TestResults {
         return isNew;
     }
 
+
     /**
      * @return Whether or not this test passed.
      */
-    @SuppressWarnings("UnusedDeclaration")
     public boolean isPassed() {
-        return (!isNew() && getMismatches() == 0 && getMissing() == 0);
+        return status == TestResultsStatus.Passed;
+    }
+
+    /**
+     * @return The result status.
+     */
+    public TestResultsStatus getStatus() {
+        return status;
     }
 
     /**
@@ -219,6 +227,13 @@ public class TestResults {
      */
     void setNew(boolean isNew) {
         this.isNew = isNew;
+    }
+
+    /**
+     * @param status The new test result status.
+     */
+    void setStatus(TestResultsStatus status) {
+        this.status = status;
     }
 
     @Override
