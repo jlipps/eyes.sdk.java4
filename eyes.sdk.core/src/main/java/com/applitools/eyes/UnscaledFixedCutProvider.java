@@ -57,6 +57,9 @@ public class UnscaledFixedCutProvider implements CutProvider {
     }
 
     public CutProvider scale(double scaleRatio) {
+        if (this instanceof NullCutProvider) {
+            return this;
+        }
         return new UnscaledFixedCutProvider(header, footer, left, right);
     }
 }
