@@ -655,14 +655,18 @@ public class Eyes extends EyesBase {
             }
             if (targetElement != null) {
                 this.targetElement = targetElement;
-                if (stitchContent) {
-                    this.checkElement(targetElement, name, checkSettings);
+                if (this.stitchContent) {
+                    this.checkElement(name, checkSettings);
                 } else {
-                    this.checkRegion(targetElement, name, checkSettings);
+                    this.checkRegion(name, checkSettings);
                 }
                 this.targetElement = null;
             } else if (seleniumCheckTarget.getFrameChain().size() > 0) {
-                switchedToFrameCount = checkFrameFluent(name, checkSettings, switchedToFrameCount);
+                if (this.stitchContent) {
+                    this.checkFullFrameOrElement(name, checkSettings);
+                } else {
+                    this.checkFrameFluent(name, checkSettings);
+                }
             } else {
                 this.checkWindowBase(NullRegionProvider.INSTANCE, name, false, checkSettings);
             }
@@ -678,29 +682,17 @@ public class Eyes extends EyesBase {
         logger.verbose("check - done!");
     }
 
-    protected int checkFrameFluent(String name, ICheckSettings checkSettings, int switchedToFrameCount) {
-        if (stitchContent) {
-            this.checkFullFrameOrElement(name, checkSettings);
-        } else {
+    protected void checkFrameFluent(String name, ICheckSettings checkSettings) {
+        final FrameChain frameChain = new FrameChain(logger, this.driver.getFrameChain());
+        final Frame targetFrame = frameChain.pop();
+        this.targetElement = targetFrame.getReference();
 
-            final FrameChain frameChain = new FrameChain(logger, this.driver.getFrameChain());
-            final Frame targetFrame = frameChain.pop();
-            this.targetElement = targetFrame.getReference();
+        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        switchTo.framesDoScroll(frameChain);
 
-            this.checkWindowBase(new RegionProvider() {
-                @Override
-                public Region getRegion() {
-                    EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
-                    switchTo.framesDoScroll(frameChain);
-                    Point p = targetElement.getLocation();
-                    Dimension d = targetElement.getSize();
-                    return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
-                }
-            }, name, false, checkSettings);
+        this.checkRegion(name, checkSettings);
 
-            this.targetElement = null;
-        }
-        return switchedToFrameCount;
+        this.targetElement = null;
     }
 
     private int switchToFrame(ISeleniumCheckTarget checkTarget) {
@@ -829,21 +821,15 @@ public class Eyes extends EyesBase {
         return viewportBounds;
     }
 
-    private void checkRegion(WebElement element, String name, ICheckSettings checkSettings) {
-        ArgumentGuard.notNull(element, "element");
-
-        Point p = element.getLocation();
-        final Location elementLocation = new Location(p.getX(), p.getY());
-        Dimension s = element.getSize();
-        final RectangleSize elementSize = new RectangleSize(s.getWidth(), s.getHeight());
-
+    private void checkRegion(String name, ICheckSettings checkSettings) {
         checkWindowBase(new RegionProvider() {
             @Override
             public Region getRegion() {
-                return new Region(elementLocation, elementSize, CoordinatesType.CONTEXT_RELATIVE);
+                Point p = targetElement.getLocation();
+                Dimension d = targetElement.getSize();
+                return new Region(p.getX(), p.getY(), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
             }
         }, name, false, checkSettings);
-
         logger.verbose("Done! trying to scroll back to original position..");
     }
 
@@ -1640,6 +1626,10 @@ public class Eyes extends EyesBase {
      */
     public void checkElement(WebElement element, String tag) {
         checkElement(element, USE_DEFAULT_MATCH_TIMEOUT, tag);
+    }
+
+    private void checkElement(String name, ICheckSettings checkSettings) {
+        this.checkElement(this.targetElement, name, checkSettings);
     }
 
     private void checkElement(WebElement element, String name, ICheckSettings checkSettings) {
