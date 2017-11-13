@@ -74,7 +74,6 @@ public class FrameChain implements Iterable<Frame>{
             frames.add(new Frame(logger, otherFrame.getReference(),
                     otherFrame.getLocation(),
                     otherFrame.getSize(), otherFrame.getInnerSize(),
-                    otherFrame.getParentScrollPosition(),
                     otherFrame.getOriginalLocation()));
         }
         logger.verbose("Done!");
@@ -140,7 +139,7 @@ public class FrameChain implements Iterable<Frame>{
         if (frames.size() == 0) {
             throw new NoFramesException("No frames in frame chain");
         }
-        return new Location(frames.get(0).getParentScrollPosition());
+        return new Location(frames.get(0).getOriginalLocation());
     }
 
     /**

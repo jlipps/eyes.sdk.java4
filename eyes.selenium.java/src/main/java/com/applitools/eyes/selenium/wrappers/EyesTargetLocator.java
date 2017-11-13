@@ -7,7 +7,6 @@ import com.applitools.eyes.EyesException;
 import com.applitools.eyes.Location;
 import com.applitools.eyes.Logger;
 import com.applitools.eyes.RectangleSize;
-import com.applitools.eyes.selenium.BordersAwareElementContentLocationProvider;
 import com.applitools.eyes.selenium.SeleniumJavaScriptExecutor;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
@@ -32,9 +31,12 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
 
     /**
      * Will be called before switching into a frame.
-     * @param targetFrame The element about to be switched to, if available. Otherwise, null.
+     * @param targetFrame The element about to be switched to.
      */
     public void willSwitchToFrame(WebElement targetFrame) {
+
+        ArgumentGuard.notNull(targetFrame, "targetFrame");
+
         EyesRemoteWebElement eyesFrame = (targetFrame instanceof EyesRemoteWebElement) ?
                 (EyesRemoteWebElement) targetFrame : new EyesRemoteWebElement(logger, driver, targetFrame);
 
@@ -44,21 +46,17 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
         int clientWidth = eyesFrame.getClientWidth();
         int clientHeight = eyesFrame.getClientHeight();
 
-        Location location = new Location(pl.getX(), pl.getY());
+        int borderLeftWidth = eyesFrame.getComputedStyleInteger("border-left-width");
+        int borderTopWidth = eyesFrame.getComputedStyleInteger("border-top-width");
 
-        // Get the frame's content location.
-        Location contentLocation =
-                new BordersAwareElementContentLocationProvider()
-                        .getLocation(logger, targetFrame, location);
+        Location contentLocation = new Location(pl.getX() + borderLeftWidth, pl.getY() + borderTopWidth);
 
         Location originalLocation = scrollPosition.getCurrentPosition();
-        Location currentLocation = scrollPosition.getCurrentPosition();
 
         Frame frame = new Frame(logger, targetFrame,
                 contentLocation,
                 new RectangleSize(ds.getWidth(), ds.getHeight()),
                 new RectangleSize(clientWidth, clientHeight),
-                currentLocation,
                 originalLocation);
 
         driver.getFrameChain().push(frame);
