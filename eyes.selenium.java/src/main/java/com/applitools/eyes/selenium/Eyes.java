@@ -188,8 +188,7 @@ public class Eyes extends EyesBase {
      * @return Whether to automatically scroll to a region being validated.
      */
     public boolean getScrollToRegion() {
-        return !(regionVisibilityStrategy instanceof
-                NopRegionVisibilityStrategy);
+        return !(regionVisibilityStrategy instanceof NopRegionVisibilityStrategy);
     }
 
     /**
@@ -202,13 +201,7 @@ public class Eyes extends EyesBase {
         logger.verbose("setting stitch mode to " + mode);
         stitchMode = mode;
         if (driver != null) {
-            switch (mode) {
-                case CSS:
-                    setPositionProvider(new CssTranslatePositionProvider(logger, this.jsExecutor));
-                    break;
-                default:
-                    setPositionProvider(new ScrollPositionProvider(logger, this.jsExecutor));
-            }
+            initPositionProvider();
         }
     }
 

@@ -49,7 +49,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         FrameChain originalFC = new FrameChain(logger, currentFrames);
 
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
         switchTo.defaultContent();
         Location defaultContentScrollPosition = positionProvider.getCurrentPosition();
         switchTo.frames(originalFC);
@@ -143,7 +143,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         try {
             sp = positionProvider.getCurrentPosition();
             if (sp == null) {
-                sp = new Location(0, 0);
+                sp = new Location(0,0);
             }
         } catch (EyesDriverOperationException e) {
             sp = new Location(0, 0);
