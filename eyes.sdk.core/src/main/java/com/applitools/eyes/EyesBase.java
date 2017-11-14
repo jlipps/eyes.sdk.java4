@@ -1053,7 +1053,10 @@ public abstract class EyesBase {
         self.logger.verbose(String.format("CheckWindowBase(%s, '%s', %b, %d)",
                 regionProvider.getClass(), tag, ignoreMismatch, retryTimeout));
 
+        self.ensureRunningSession();
+
         self.logger.verbose("Calling match window...");
+
         result = self.matchWindowTask.matchWindow(self.getUserInputs(), regionProvider.getRegion(), tag,
                 self.shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, imageMatchSettings, retryTimeout);
 
@@ -1225,10 +1228,11 @@ public abstract class EyesBase {
             viewportSizeHandler.set(viewportSize);
             this.sessionType = sessionType != null ? sessionType : SessionType.SEQUENTIAL;
 
-            ensureRunningSession();
+            if (viewportSize != null) {
+                ensureRunningSession();
+            }
 
             isOpen = true;
-
         } catch (EyesException e) {
             logger.log(e.getMessage());
             logger.getLogHandler().close();
