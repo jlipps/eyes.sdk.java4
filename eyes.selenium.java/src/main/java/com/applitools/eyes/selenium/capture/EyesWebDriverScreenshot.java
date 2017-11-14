@@ -235,11 +235,6 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         return frameWindow;
     }
 
-    @Override
-    public Region getRelevantRegion() {
-        return frameWindow;
-    }
-
     /**
      * @return A copy of the frame chain which was available when the
      * screenshot was created.

@@ -113,7 +113,6 @@ public class FullPageCaptureAlgorithm {
             regionInScreenshot = getRegionInScreenshot(region, image, pixelRatio, screenshot, regionPositionCompensation);
         }
 
-        //Region regionInScreenshot = screenshot.getRelevantRegion();
         if (!regionInScreenshot.isEmpty()) {
             image = ImageUtils.getImagePart(image, regionInScreenshot);
             saveDebugScreenshotPart(debugScreenshotsProvider, image, region, "cropped");
