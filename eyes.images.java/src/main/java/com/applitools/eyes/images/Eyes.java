@@ -5,6 +5,9 @@ package com.applitools.eyes.images;
 
 import com.applitools.eyes.*;
 import com.applitools.eyes.exceptions.TestFailedException;
+import com.applitools.eyes.fluent.CheckSettings;
+import com.applitools.eyes.fluent.ICheckSettings;
+import com.applitools.eyes.fluent.ICheckSettingsInternal;
 import com.applitools.eyes.positioning.NullRegionProvider;
 import com.applitools.eyes.positioning.RegionProvider;
 import com.applitools.eyes.triggers.MouseAction;
@@ -66,6 +69,17 @@ public class Eyes extends EyesBase {
      */
     public void open(String appName, String testName) {
         open(appName, testName, null);
+    }
+
+    public boolean check(String name, ICheckSettings checkSettings) {
+        IImagesCheckTarget imagesCheckTarget = (checkSettings instanceof IImagesCheckTarget) ? (IImagesCheckTarget) checkSettings : null;
+        BufferedImage image = imagesCheckTarget.getImage();
+
+        if (viewportSizeHandler.get() == null) {
+            setViewportSize(new RectangleSize(image.getWidth(), image.getHeight()));
+        }
+
+        return checkImage_(NullRegionProvider.INSTANCE, image, name, false, checkSettings);
     }
 
     @Deprecated
@@ -132,7 +146,7 @@ public class Eyes extends EyesBase {
             setViewportSize(new RectangleSize(image.getWidth(), image.getHeight()));
         }
 
-        return checkImage_(NullRegionProvider.INSTANCE, image, tag, ignoreMismatch);
+        return checkImage_(NullRegionProvider.INSTANCE, image, tag, ignoreMismatch, new CheckSettings(USE_DEFAULT_TIMEOUT));
     }
 
     /**
@@ -228,7 +242,7 @@ public class Eyes extends EyesBase {
             public Region getRegion() {
                 return region;
             }
-        }, image, tag, ignoreMismatch);
+        }, image, tag, ignoreMismatch, new CheckSettings(USE_DEFAULT_TIMEOUT));
     }
 
     /**
@@ -327,25 +341,27 @@ public class Eyes extends EyesBase {
     }
 
     /**
-     * See {@link #checkImage_(RegionProvider, String, boolean)}.
+     * See {@link #checkImage_(RegionProvider, String, boolean, ICheckSettings)}.
      * @param regionProvider The region for which verification will be
      *                       performed. see {@link #checkWindowBase(RegionProvider, String, boolean, int)}.
      * @param image          The image to perform visual validation for.
      * @param tag            An optional tag to be associated with the validation checkpoint.
      * @param ignoreMismatch True if the server should ignore a negative result for the visual validation.
+     * @param checkSettings  The settings to use when checking the image.
      * @return True if the image matched the expected output, false otherwise.
      */
     private boolean checkImage_(RegionProvider regionProvider,
                                 BufferedImage image,
                                 String tag,
-                                boolean ignoreMismatch) {
+                                boolean ignoreMismatch,
+                                ICheckSettings checkSettings) {
         // We verify that the image is indeed in the correct format.
         image = ImageUtils.normalizeImageType(image);
 
         // Set the screenshot to be verified.
         screenshot = new EyesImagesScreenshot(image);
 
-        return checkImage_(regionProvider, tag, ignoreMismatch);
+        return checkImage_(regionProvider, tag, ignoreMismatch, checkSettings);
     }
 
 
@@ -356,14 +372,15 @@ public class Eyes extends EyesBase {
      *                       performed. see {@link #checkWindowBase(RegionProvider, String, boolean, int)}.
      * @param tag            An optional tag to be associated with the validation checkpoint.
      * @param ignoreMismatch True if the server should ignore a negative result for the visual validation.
+     * @param checkSettings  The settings to use when checking the image.
      * @return True if the image matched the expected output, false otherwise.
      */
-    private boolean checkImage_(RegionProvider regionProvider, String tag, boolean ignoreMismatch) {
+    private boolean checkImage_(RegionProvider regionProvider, String tag, boolean ignoreMismatch, ICheckSettings checkSettings) {
 
         // Set the title to be linked to the screenshot.
         title = (tag != null) ? tag : "";
 
-        MatchResult mr = checkWindowBase(regionProvider, tag, ignoreMismatch);
+        MatchResult mr = checkWindowBase(regionProvider, tag, ignoreMismatch, checkSettings);
 
         return mr.getAsExpected();
     }
