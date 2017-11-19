@@ -1,24 +1,20 @@
 package com.applitools.eyes.selenium.fluent;
 
-import com.applitools.eyes.EyesBase;
-import com.applitools.eyes.EyesScreenshot;
-import com.applitools.eyes.FloatingMatchSettings;
+import com.applitools.eyes.*;
 import com.applitools.eyes.fluent.GetFloatingRegion;
-import com.applitools.eyes.selenium.Eyes;
-import org.openqa.selenium.By;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
 
-public class FloatingRegionBySelector implements GetFloatingRegion{
+public class FloatingRegionByElement implements GetFloatingRegion {
 
-    private By selector;
+    private WebElement element;
     private int maxUpOffset;
     private int maxDownOffset;
     private int maxLeftOffset;
     private int maxRightOffset;
 
-    public FloatingRegionBySelector(By regionSelector, int maxUpOffset, int maxDownOffset, int maxLeftOffset, int maxRightOffset) {
-
-        this.selector = regionSelector;
+    public FloatingRegionByElement(WebElement element, int maxUpOffset, int maxDownOffset, int maxLeftOffset, int maxRightOffset) {
+        this.element = element;
         this.maxUpOffset = maxUpOffset;
         this.maxDownOffset = maxDownOffset;
         this.maxLeftOffset = maxLeftOffset;
@@ -27,10 +23,13 @@ public class FloatingRegionBySelector implements GetFloatingRegion{
 
     @Override
     public FloatingMatchSettings getRegion(EyesBase eyesBase, EyesScreenshot screenshot) {
-        WebElement element = ((Eyes)eyesBase).getDriver().findElement(this.selector);
+        Point p = element.getLocation();
+        Location l = new Location(p.getX(), p.getY());
+        Location lTag = screenshot.convertLocation(l, CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
+
         return new FloatingMatchSettings(
-                element.getLocation().getX(),
-                element.getLocation().getY(),
+                lTag.getX(),
+                lTag.getY(),
                 element.getSize().getWidth(),
                 element.getSize().getHeight(),
                 maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset);

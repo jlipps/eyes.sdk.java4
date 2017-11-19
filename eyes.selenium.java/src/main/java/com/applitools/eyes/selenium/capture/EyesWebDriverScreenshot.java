@@ -35,10 +35,10 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     // The top/left coordinates of the frame window(!) relative to the top/left
     // of the screenshot. Used for calculations, so can also be outside(!)
     // the screenshot.
-    private final Location frameLocationInScreenshot;
+    private Location frameLocationInScreenshot;
 
     // The part of the frame window which is visible in the screenshot
-    private final Region frameWindow;
+    private Region frameWindow;
 
     private static Location getDefaultContentScrollPosition(Logger logger, FrameChain currentFrames, EyesWebDriver driver) {
         IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(driver);
@@ -218,13 +218,13 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         ArgumentGuard.notNull(entireFrameSize, "entireFrameSize");
         this.logger = logger;
         this.driver = driver;
-        frameChain = driver.getFrameChain();
+        this.frameChain = driver.getFrameChain();
         // The frame comprises the entire screenshot.
-        screenshotType = ScreenshotType.ENTIRE_FRAME;
+        this.screenshotType = ScreenshotType.ENTIRE_FRAME;
 
-        currentFrameScrollPosition = new Location(0, 0);
-        frameLocationInScreenshot = new Location(0, 0);
-        frameWindow = new Region(new Location(0, 0), entireFrameSize);
+        this.currentFrameScrollPosition = Location.ZERO;
+        this.frameLocationInScreenshot = Location.ZERO;
+        this.frameWindow = new Region(Location.ZERO, entireFrameSize);
     }
 
     /**
@@ -267,6 +267,8 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         EyesWebDriverScreenshot result = new EyesWebDriverScreenshot(logger, driver, subScreenshotImage,
                 new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
+
+        result.frameLocationInScreenshot = new Location(-region.getLocation().getX(), -region.getLocation().getY());
 
         logger.verbose("Done!");
         return result;

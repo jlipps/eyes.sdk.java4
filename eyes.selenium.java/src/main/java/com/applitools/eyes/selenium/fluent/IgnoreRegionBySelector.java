@@ -1,6 +1,7 @@
 package com.applitools.eyes.selenium.fluent;
 
 import com.applitools.eyes.EyesBase;
+import com.applitools.eyes.EyesScreenshot;
 import com.applitools.eyes.Region;
 import com.applitools.eyes.fluent.GetRegion;
 import com.applitools.eyes.selenium.Eyes;
@@ -15,7 +16,7 @@ public class IgnoreRegionBySelector implements GetRegion {
     }
 
     @Override
-    public Region getRegion(EyesBase eyesBase) {
+    public Region getRegion(EyesBase eyesBase, EyesScreenshot screenshot) {
         WebElement element = ((Eyes)eyesBase).getDriver().findElement(this.selector);
         return new Region(
                 element.getLocation().getX(),
