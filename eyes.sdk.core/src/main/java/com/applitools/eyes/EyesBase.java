@@ -1012,7 +1012,11 @@ public abstract class EyesBase {
         ArgumentGuard.isValidState(getIsOpen(), "Eyes not open");
         ArgumentGuard.notNull(regionProvider, "regionProvider");
 
+        beforeMatchWindow();
+
         result = matchWindow(regionProvider, tag, ignoreMismatch, checkSettings, this);
+
+        afterMatchWindow();
 
         logger.verbose("MatchWindow Done!");
 
@@ -1026,6 +1030,9 @@ public abstract class EyesBase {
         logger.verbose("Done!");
         return result;
     }
+
+    protected void beforeMatchWindow() { }
+    protected void afterMatchWindow() { }
 
     private static MatchResult matchWindow(RegionProvider regionProvider, String tag, boolean ignoreMismatch,
                                            ICheckSettings checkSettings, EyesBase self) {
@@ -1201,6 +1208,8 @@ public abstract class EyesBase {
 
             this.isViewportSizeSet = false;
 
+            beforeOpen();
+
             this.currentAppName = appName != null ? appName : this.appName;
             this.testName = testName;
             viewportSizeHandler.set(viewportSize);
@@ -1211,12 +1220,18 @@ public abstract class EyesBase {
             }
 
             isOpen = true;
+
+            afterOpen();
+
         } catch (EyesException e) {
             logger.log(e.getMessage());
             logger.getLogHandler().close();
             throw e;
         }
     }
+
+    protected void beforeOpen() { }
+    protected void afterOpen() { }
 
     private void ensureRunningSession() {
         if (runningSession != null) {

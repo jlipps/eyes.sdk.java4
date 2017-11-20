@@ -45,6 +45,7 @@ import java.util.List;
  * The main API gateway for the SDK.
  */
 public class Eyes extends EyesBase {
+
     public interface WebDriverAction {
         void drive(WebDriver driver);
     }
@@ -67,6 +68,8 @@ public class Eyes extends EyesBase {
 
     private boolean forceFullPageScreenshot;
     private boolean checkFrameOrElement;
+
+    private String originalOverflow;
 
     public Region getRegionToCheck() {
         return regionToCheck;
@@ -1914,6 +1917,39 @@ public class Eyes extends EyesBase {
         EyesSeleniumUtils.setViewportSize(new Logger(), driver, size);
     }
 
+    @Override
+    protected void beforeOpen() {
+        tryHideScrollbars();
+    }
+
+    @Override
+    protected void beforeMatchWindow() {
+        tryHideScrollbars();
+    }
+
+    private void tryHideScrollbars() {
+        if (this.hideScrollbars) {
+            try {
+                this.originalOverflow = EyesSeleniumUtils.hideScrollbars(this.driver, 200);
+            } catch (EyesDriverOperationException e) {
+                logger.log("WARNING: Failed to hide scrollbars! Error: " + e.getMessage());
+            }
+        }
+    }
+
+    /*
+    @Override
+    protected void afterMatchWindow() {
+        if (this.hideScrollbars) {
+            try {
+                EyesSeleniumUtils.setOverflow(this.driver, this.originalOverflow);
+            } catch (EyesDriverOperationException e) {
+                // Bummer, but we'll continue with the screenshot anyway :)
+                logger.log("WARNING: Failed to revert overflow! Error: " + e.getMessage());
+            }
+        }
+    }
+    */
 
     @Override
     protected EyesScreenshot getScreenshot() {
@@ -1923,92 +1959,72 @@ public class Eyes extends EyesBase {
 
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
-        String originalOverflow = null;
-        if (hideScrollbars) {
-            try {
-                originalOverflow =
-                        EyesSeleniumUtils.hideScrollbars(driver, 200);
-            } catch (EyesDriverOperationException e) {
-                logger.log("WARNING: Failed to hide scrollbars! Error: " + e.getMessage());
+        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
+
+        FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
+        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+
+        if (checkFrameOrElement) {
+            logger.verbose("Check frame/element requested");
+
+            switchTo.framesDoScroll(originalFrameChain);
+
+            BufferedImage entireFrameOrElement =
+                    algo.getStitchedRegion(imageProvider, regionToCheck,
+                            positionProvider, getElementPositionProvider(),
+                            scaleProviderFactory,
+                            cutProviderHandler.get(),
+                            getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
+                            getStitchOverlap(), regionPositionCompensation);
+
+            logger.verbose("Building screenshot object...");
+            result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
+                    new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
+        } else if (forceFullPageScreenshot || stitchContent) {
+            logger.verbose("Full page screenshot requested.");
+
+            // Save the current frame path.
+            Location originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);
+
+            switchTo.defaultContent();
+
+            BufferedImage fullPageImage =
+                    algo.getStitchedRegion(imageProvider, Region.EMPTY,
+                            new ScrollPositionProvider(logger, this.jsExecutor),
+                            positionProvider, scaleProviderFactory,
+                            cutProviderHandler.get(),
+                            getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
+                            getStitchOverlap(), regionPositionCompensation);
+
+            switchTo.frames(originalFrameChain);
+            result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
+        } else {
+            ensureElementVisible(this.targetElement);
+
+            logger.verbose("Screenshot requested...");
+            BufferedImage screenshotImage = imageProvider.getImage();
+            debugScreenshotsProvider.save(screenshotImage, "original");
+
+            ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
+            if (scaleProvider.getScaleRatio() != 1.0) {
+                logger.verbose("scaling...");
+                screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
+                debugScreenshotsProvider.save(screenshotImage, "scaled");
             }
+
+            CutProvider cutProvider = cutProviderHandler.get();
+            if (!(cutProvider instanceof NullCutProvider)) {
+                logger.verbose("cutting...");
+                screenshotImage = cutProvider.cut(screenshotImage);
+                debugScreenshotsProvider.save(screenshotImage, "cut");
+            }
+
+            logger.verbose("Creating screenshot object...");
+            result = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
         }
-        try {
-            EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
-
-            FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
-            FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
-            EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
-
-            if (checkFrameOrElement) {
-                logger.verbose("Check frame/element requested");
-
-                switchTo.framesDoScroll(originalFrameChain);
-
-                BufferedImage entireFrameOrElement =
-                        algo.getStitchedRegion(imageProvider, regionToCheck,
-                                positionProvider, getElementPositionProvider(),
-                                scaleProviderFactory,
-                                cutProviderHandler.get(),
-                                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                                getStitchOverlap(), regionPositionCompensation);
-
-                logger.verbose("Building screenshot object...");
-                result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
-                        new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
-            } else if (forceFullPageScreenshot || stitchContent) {
-                logger.verbose("Full page screenshot requested.");
-
-                // Save the current frame path.
-                Location originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);
-
-                switchTo.defaultContent();
-
-                BufferedImage fullPageImage =
-                        algo.getStitchedRegion(imageProvider, Region.EMPTY,
-                                new ScrollPositionProvider(logger, this.jsExecutor),
-                                positionProvider, scaleProviderFactory,
-                                cutProviderHandler.get(),
-                                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                                getStitchOverlap(), regionPositionCompensation);
-
-                switchTo.frames(originalFrameChain);
-                result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
-            } else {
-                ensureElementVisible(this.targetElement);
-
-                logger.verbose("Screenshot requested...");
-                BufferedImage screenshotImage = imageProvider.getImage();
-                debugScreenshotsProvider.save(screenshotImage, "original");
-
-                ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
-                if (scaleProvider.getScaleRatio()!=1.0) {
-                    logger.verbose("scaling...");
-                    screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
-                    debugScreenshotsProvider.save(screenshotImage, "scaled");
-                }
-
-                CutProvider cutProvider = cutProviderHandler.get();
-                if (!(cutProvider instanceof NullCutProvider)) {
-                    logger.verbose("cutting...");
-                    screenshotImage = cutProvider.cut(screenshotImage);
-                    debugScreenshotsProvider.save(screenshotImage, "cut");
-                }
-
-                logger.verbose("Creating screenshot object...");
-                result = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
-            }
-            logger.verbose("Done!");
-            return result;
-        } finally {
-            if (hideScrollbars) {
-                try {
-                    EyesSeleniumUtils.setOverflow(driver, originalOverflow);
-                } catch (EyesDriverOperationException e) {
-                    // Bummer, but we'll continue with the screenshot anyway :)
-                    logger.log("WARNING: Failed to revert overflow! Error: " + e.getMessage());
-                }
-            }
-        }
+        logger.verbose("Done!");
+        return result;
     }
 
     @Override
