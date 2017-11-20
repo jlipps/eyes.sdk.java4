@@ -21,6 +21,7 @@ public class TestClassicApi_Chrome_ForceFullPageScreenShot extends TestClassicAp
         @Override
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Classic API - ForceFPS";
+            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
             forceFullPageScreenshot = true;
         }
     };
@@ -30,7 +31,7 @@ public class TestClassicApi_Chrome_ForceFullPageScreenShot extends TestClassicAp
         @Override
         public Statement apply(Statement statement, Description description) {
             ChromeOptions options = new ChromeOptions();
-            options.addArguments("disable-infobars");
+            options.addArguments("disable-infobars", "headless");
 
             //Run locally
             //-----------

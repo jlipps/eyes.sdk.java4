@@ -74,7 +74,6 @@ public class FrameChain implements Iterable<Frame>{
             frames.add(new Frame(logger, otherFrame.getReference(),
                     otherFrame.getLocation(),
                     otherFrame.getSize(), otherFrame.getInnerSize(),
-                    otherFrame.getParentScrollPosition(),
                     otherFrame.getOriginalLocation()));
         }
         logger.verbose("Done!");
@@ -99,8 +98,8 @@ public class FrameChain implements Iterable<Frame>{
      * Removes the last inserted frame element. Practically means we switched
      * back to the parent of the current frame
      */
-    public void pop() {
-        frames.remove(frames.size() - 1);
+    public Frame pop() {
+        return frames.remove(frames.size() - 1);
     }
 
     /**
@@ -126,7 +125,7 @@ public class FrameChain implements Iterable<Frame>{
         Location result = new Location(0 ,0);
 
         for (Frame frame: frames) {
-            result.offset(frame.getLocation());
+            result = result.offset(frame.getLocation());
         }
 
         return result;
@@ -140,7 +139,7 @@ public class FrameChain implements Iterable<Frame>{
         if (frames.size() == 0) {
             throw new NoFramesException("No frames in frame chain");
         }
-        return new Location(frames.get(0).getParentScrollPosition());
+        return new Location(frames.get(0).getOriginalLocation());
     }
 
     /**

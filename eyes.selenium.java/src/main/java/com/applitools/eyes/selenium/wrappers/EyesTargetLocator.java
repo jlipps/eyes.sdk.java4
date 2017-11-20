@@ -7,7 +7,6 @@ import com.applitools.eyes.EyesException;
 import com.applitools.eyes.Location;
 import com.applitools.eyes.Logger;
 import com.applitools.eyes.RectangleSize;
-import com.applitools.eyes.selenium.BordersAwareElementContentLocationProvider;
 import com.applitools.eyes.selenium.SeleniumJavaScriptExecutor;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
@@ -32,9 +31,12 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
 
     /**
      * Will be called before switching into a frame.
-     * @param targetFrame The element about to be switched to, if available. Otherwise, null.
+     * @param targetFrame The element about to be switched to.
      */
     public void willSwitchToFrame(WebElement targetFrame) {
+
+        ArgumentGuard.notNull(targetFrame, "targetFrame");
+
         EyesRemoteWebElement eyesFrame = (targetFrame instanceof EyesRemoteWebElement) ?
                 (EyesRemoteWebElement) targetFrame : new EyesRemoteWebElement(logger, driver, targetFrame);
 
@@ -44,23 +46,17 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
         int clientWidth = eyesFrame.getClientWidth();
         int clientHeight = eyesFrame.getClientHeight();
 
-        Location location = new Location(pl.getX(), pl.getY());
+        int borderLeftWidth = eyesFrame.getComputedStyleInteger("border-left-width");
+        int borderTopWidth = eyesFrame.getComputedStyleInteger("border-top-width");
 
-        // Get the frame's content location.
-        Location contentLocation =
-                new BordersAwareElementContentLocationProvider()
-                    .getLocation(logger, targetFrame, location);
+        Location contentLocation = new Location(pl.getX() + borderLeftWidth, pl.getY() + borderTopWidth);
 
         Location originalLocation = scrollPosition.getCurrentPosition();
-        scrollPosition.setPosition(location);
-
-        Location currentLocation = scrollPosition.getCurrentPosition();
 
         Frame frame = new Frame(logger, targetFrame,
                 contentLocation,
                 new RectangleSize(ds.getWidth(), ds.getHeight()),
                 new RectangleSize(clientWidth, clientHeight),
-                currentLocation,
                 originalLocation);
 
         driver.getFrameChain().push(frame);
@@ -119,7 +115,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
                         "No frame with name or id '%s' exists!", nameOrId));
             }
         }
-        logger.verbose("Done! Making preparations..");
+        logger.verbose("Done! Making preparations...");
         willSwitchToFrame(frames.get(0));
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(nameOrId);
@@ -129,7 +125,7 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
 
     public WebDriver frame(WebElement frameElement) {
         logger.verbose("EyesTargetLocator.frame(element)");
-        logger.verbose("Making preparations..");
+        logger.verbose("Making preparations...");
         willSwitchToFrame(frameElement);
         logger.verbose("Done! Switching to frame...");
         targetLocator.frame(frameElement);
@@ -155,14 +151,33 @@ public class EyesTargetLocator implements WebDriver.TargetLocator {
      * @param frameChain The path to the frame to switch to.
      * @return The WebDriver with the switched context.
      */
-    public WebDriver frames(FrameChain frameChain) {
-        logger.verbose("EyesTargetLocator.frames(frameChain)");
+    public WebDriver framesDoScroll(FrameChain frameChain) {
+        logger.verbose("EyesTargetLocator.framesDoScroll(frameChain)");
+        driver.switchTo().defaultContent();
         for (Frame frame : frameChain) {
             logger.verbose("Scrolling by parent scroll position...");
-            scrollPosition.setPosition(frame.getParentScrollPosition());
+            Location frameLocation = frame.getLocation();
+            scrollPosition.setPosition(frameLocation);
             logger.verbose("Done! Switching to frame...");
             driver.switchTo().frame(frame.getReference());
             logger.verbose("Done!");
+        }
+
+        logger.verbose("Done switching into nested frames!");
+        return driver;
+    }
+
+    /**
+     * Switches into every frame in the frame chain. This is used as way to
+     * switch into nested frames (while considering scroll) in a single call.
+     * @param frameChain The path to the frame to switch to.
+     * @return The WebDriver with the switched context.
+     */
+    public WebDriver frames(FrameChain frameChain) {
+        logger.verbose("EyesTargetLocator.frames(frameChain)");
+        driver.switchTo().defaultContent();
+        for (Frame frame : frameChain) {
+            driver.switchTo().frame(frame.getReference());
         }
         logger.verbose("Done switching into nested frames!");
         return driver;

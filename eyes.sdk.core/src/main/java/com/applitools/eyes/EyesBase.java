@@ -6,6 +6,7 @@ import com.applitools.eyes.debug.DebugScreenshotsProvider;
 import com.applitools.eyes.debug.FileDebugScreenshotsProvider;
 import com.applitools.eyes.debug.NullDebugScreenshotProvider;
 import com.applitools.eyes.diagnostics.ResponseTimeAlgorithm;
+import com.applitools.eyes.exceptions.DiffsFoundException;
 import com.applitools.eyes.exceptions.NewTestException;
 import com.applitools.eyes.exceptions.TestFailedException;
 import com.applitools.eyes.fluent.*;
@@ -106,13 +107,8 @@ public abstract class EyesBase {
 
         Region.initLogger(logger);
 
-        scaleProviderHandler = new SimplePropertyHandler<>();
-        scaleProviderHandler.set(new NullScaleProvider());
-        cutProviderHandler = new SimplePropertyHandler<>();
-        cutProviderHandler.set(new NullCutProvider());
-        positionProvider = new InvalidPositionProvider();
-        viewportSizeHandler = new SimplePropertyHandler<>();
-        viewportSizeHandler.set(null);
+        initProviders();
+
         serverConnector = ServerConnectorFactory.create(logger, getBaseAgentId(), serverUrl);
         matchTimeout = DEFAULT_MATCH_TIMEOUT;
         runningSession = null;
@@ -126,6 +122,16 @@ public abstract class EyesBase {
         agentId = null;
         lastScreenshot = null;
         debugScreenshotsProvider = new NullDebugScreenshotProvider();
+    }
+
+    private void initProviders() {
+        scaleProviderHandler = new SimplePropertyHandler<>();
+        scaleProviderHandler.set(new NullScaleProvider());
+        cutProviderHandler = new SimplePropertyHandler<>();
+        cutProviderHandler.set(new NullCutProvider());
+        positionProvider = new InvalidPositionProvider();
+        viewportSizeHandler = new SimplePropertyHandler<>();
+        viewportSizeHandler.set(null);
     }
 
     /**
@@ -646,51 +652,34 @@ public abstract class EyesBase {
             boolean save = (isNewSession && saveNewTests)
                     || (!isNewSession && saveFailedTests);
             logger.verbose("Automatically save test? " + String.valueOf(save));
-            TestResults results =
-                    serverConnector.stopSession(runningSession, false,
-                            save);
+            TestResults results = serverConnector.stopSession(runningSession, false, save);
 
             results.setNew(isNewSession);
             results.setUrl(sessionResultsUrl);
             logger.verbose(results.toString());
 
-            String instructions;
-            if (!isNewSession &&
-                    (0 < results.getMismatches() || 0 < results.getMissing())) {
-
-                logger.log("--- Failed test ended. See details at "
-                        + sessionResultsUrl);
-
-                if (throwEx) {
-                    String message =
-                            "'" + sessionStartInfo.getScenarioIdOrName()
-                                    + "' of '"
-                                    + sessionStartInfo.getAppIdOrName()
-                                    + "'. See details at " + sessionResultsUrl;
-                    throw new TestFailedException(results, message);
+            TestResultsStatus status = results.getStatus();
+            if (status == TestResultsStatus.Unresolved) {
+                if (results.isNew()) {
+                    logger.log("--- New test ended. Please approve the new baseline at " + sessionResultsUrl);
+                    if (throwEx) {
+                        throw new NewTestException(results, sessionStartInfo);
+                    }
+                } else {
+                    logger.log("--- Failed test ended. See details at " + sessionResultsUrl);
+                    if (throwEx) {
+                        throw new DiffsFoundException(results, sessionStartInfo);
+                    }
                 }
-                return results;
-            }
-
-            if (isNewSession) {
-                instructions = "Please approve the new baseline at "
-                        + sessionResultsUrl;
-
-                logger.log("--- New test ended. " + instructions);
-
+            } else if (status == TestResultsStatus.Failed) {
+                logger.log("--- Failed test ended. See details at " + sessionResultsUrl);
                 if (throwEx) {
-                    String message =
-                            "'" + sessionStartInfo.getScenarioIdOrName()
-                                    + "' of '" + sessionStartInfo
-                                    .getAppIdOrName()
-                                    + "'. " + instructions;
-                    throw new NewTestException(results, message);
+                    throw new TestFailedException(results, sessionStartInfo);
                 }
-                return results;
+            } else {
+                // Test passed
+                logger.log("--- Test passed. See details at " + sessionResultsUrl);
             }
-
-            // Test passed
-            logger.log("--- Test passed. See details at " + sessionResultsUrl);
 
             return results;
         } finally {
@@ -1023,7 +1012,7 @@ public abstract class EyesBase {
         ArgumentGuard.isValidState(getIsOpen(), "Eyes not open");
         ArgumentGuard.notNull(regionProvider, "regionProvider");
 
-        result = matchWindow(regionProvider, tag, ignoreMismatch, checkSettings);
+        result = matchWindow(regionProvider, tag, ignoreMismatch, checkSettings, this);
 
         logger.verbose("MatchWindow Done!");
 
@@ -1038,48 +1027,57 @@ public abstract class EyesBase {
         return result;
     }
 
-    private MatchResult matchWindow(RegionProvider regionProvider, String tag, boolean ignoreMismatch, ICheckSettings checkSettings) {
+    private static MatchResult matchWindow(RegionProvider regionProvider, String tag, boolean ignoreMismatch,
+                                           ICheckSettings checkSettings, EyesBase self) {
         MatchResult result;
         ICheckSettingsInternal checkSettingsInternal = (checkSettings instanceof ICheckSettingsInternal) ? (ICheckSettingsInternal) checkSettings : null;
 
         int retryTimeout = -1;
+        ImageMatchSettings defaultMatchSettings = self.getDefaultMatchSettings();
         ImageMatchSettings imageMatchSettings = null;
         if (checkSettingsInternal != null) {
             retryTimeout = checkSettingsInternal.getTimeout();
 
             MatchLevel matchLevel = checkSettingsInternal.getMatchLevel();
-            matchLevel = (matchLevel == null) ? getDefaultMatchSettings().getMatchLevel() : matchLevel;
+            matchLevel = (matchLevel == null) ? defaultMatchSettings.getMatchLevel() : matchLevel;
 
             imageMatchSettings = new ImageMatchSettings(matchLevel, null);
 
-            collectIgnoreRegions(checkSettingsInternal, imageMatchSettings);
-            collectFloatingRegions(checkSettingsInternal, imageMatchSettings);
+            collectIgnoreRegions(checkSettingsInternal, imageMatchSettings, self);
+            collectFloatingRegions(checkSettingsInternal, imageMatchSettings, self);
 
             Boolean ignoreCaret = checkSettingsInternal.getIgnoreCaret();
-            imageMatchSettings.setIgnoreCaret((ignoreCaret == null) ? getDefaultMatchSettings().getIgnoreCaret() : ignoreCaret);
+            imageMatchSettings.setIgnoreCaret((ignoreCaret == null) ? defaultMatchSettings.getIgnoreCaret() : ignoreCaret);
         }
 
-        logger.verbose(String.format("CheckWindowBase(%s, '%s', %b, %d)", regionProvider.getClass(), tag, ignoreMismatch, retryTimeout));
+        self.logger.verbose(String.format("CheckWindowBase(%s, '%s', %b, %d)",
+                regionProvider.getClass(), tag, ignoreMismatch, retryTimeout));
 
-        logger.verbose("Calling match window...");
-        result = matchWindowTask.matchWindow(getUserInputs(), regionProvider.getRegion(), tag,
-                shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, imageMatchSettings, retryTimeout);
+        self.ensureRunningSession();
+
+        self.logger.verbose("Calling match window...");
+
+        result = self.matchWindowTask.matchWindow(self.getUserInputs(), regionProvider.getRegion(), tag,
+                self.shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, imageMatchSettings, retryTimeout);
 
         return result;
     }
 
-    private void collectIgnoreRegions(ICheckSettingsInternal checkSettingsInternal, ImageMatchSettings imageMatchSettings) {
+    private static void collectIgnoreRegions(ICheckSettingsInternal checkSettingsInternal,
+                                      ImageMatchSettings imageMatchSettings, EyesBase self) {
+
         List<Region> ignoreRegions = new ArrayList<>();
         for (GetRegion ignoreRegionProvider : checkSettingsInternal.getIgnoreRegions()) {
-            ignoreRegions.add(ignoreRegionProvider.getRegion(this));
+            ignoreRegions.add(ignoreRegionProvider.getRegion(self));
         }
         imageMatchSettings.setIgnoreRegions(ignoreRegions.toArray(new Region[0]));
     }
 
-    private void collectFloatingRegions(ICheckSettingsInternal checkSettingsInternal, ImageMatchSettings imageMatchSettings) {
+    private static void collectFloatingRegions(ICheckSettingsInternal checkSettingsInternal,
+                                               ImageMatchSettings imageMatchSettings, EyesBase self) {
         List<FloatingMatchSettings> floatingRegions = new ArrayList<>();
         for (GetFloatingRegion floatingRegionProvider : checkSettingsInternal.getFloatingRegions()) {
-            floatingRegions.add(floatingRegionProvider.getRegion(this));
+            floatingRegions.add(floatingRegionProvider.getRegion(self));
         }
         imageMatchSettings.setFloatingRegions(floatingRegions.toArray(new FloatingMatchSettings[0]));
     }
@@ -1221,18 +1219,20 @@ public abstract class EyesBase {
             logOpenBase();
             validateSessionOpen();
 
+            initProviders();
+
             this.isViewportSizeSet = false;
 
             this.currentAppName = appName != null ? appName : this.appName;
             this.testName = testName;
             viewportSizeHandler.set(viewportSize);
             this.sessionType = sessionType != null ? sessionType : SessionType.SEQUENTIAL;
-            scaleProviderHandler.set(new NullScaleProvider());
 
-            ensureRunningSession();
+            if (viewportSize != null) {
+                ensureRunningSession();
+            }
 
             isOpen = true;
-
         } catch (EyesException e) {
             logger.log(e.getMessage());
             logger.getLogHandler().close();
@@ -1379,9 +1379,8 @@ public abstract class EyesBase {
             return;
         }
 
-        control = lastScreenshot.getIntersectedRegion(control,
-                CoordinatesType.CONTEXT_RELATIVE,
-                CoordinatesType.SCREENSHOT_AS_IS);
+        control = lastScreenshot.getIntersectedRegion(control, CoordinatesType.SCREENSHOT_AS_IS);
+
         if (control.isEmpty()) {
             logger.verbose(String.format("Ignoring '%s' (out of bounds)",
                     text));
@@ -1434,9 +1433,7 @@ public abstract class EyesBase {
         }
 
         Region controlScreenshotIntersect =
-                lastScreenshot.getIntersectedRegion(control,
-                        CoordinatesType.CONTEXT_RELATIVE,
-                        CoordinatesType.SCREENSHOT_AS_IS);
+                lastScreenshot.getIntersectedRegion(control, CoordinatesType.SCREENSHOT_AS_IS);
 
         // If the region is NOT empty, we'll give the coordinates relative to
         // the control.
@@ -1534,7 +1531,7 @@ public abstract class EyesBase {
     }
 
     /**
-     * @param region         A callback for getting the region of the screenshot which will be set in the application output.
+     * @param region         The region of the screenshot which will be set in the application output.
      * @param lastScreenshot Previous application screenshot (used for compression) or {@code null} if not available.
      * @return The updated app output and screenshot.
      */

@@ -9,21 +9,19 @@ import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.junit.runners.model.Statement;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.safari.SafariDriver;
-import org.openqa.selenium.safari.SafariOptions;
 
 @RunWith(JUnit4.class)
-public class TestFluentApi_Safari_ForceFullPageScreenshot extends TestFluentApi {
-
+public class TestSpecialCases_Chrome_ForceFullPageScreenshot extends TestSpecialCases {
     @ClassRule
     public static final TestRule setTestSuitName = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            testSuitName = "Eyes Selenium SDK - Fluent API - Java - Safari - ForceFPS";
-            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
+            testSuitName = "Eyes Selenium SDK - Special Cases - ForceFPS";
+            testedPageUrl = "file:///C:/Users/USER/devel/demo_pages/TestPages/WixLikeTestPage/index.html";
+            hideScrollbars = true;
             forceFullPageScreenshot = true;
-            runRemotely = false;
         }
     };
 
@@ -31,15 +29,19 @@ public class TestFluentApi_Safari_ForceFullPageScreenshot extends TestFluentApi 
     public final TestRule beforeTest = new TestWatcher() {
         @Override
         public Statement apply(Statement statement, Description description) {
+            ChromeOptions options = new ChromeOptions();
+            options.addArguments("disable-infobars");
+            options.addArguments("headless");
+
             //Run locally
             //-----------
-            SafariOptions options = new SafariOptions();
-            options.setUseTechnologyPreview(true);
-            webDriver = new SafariDriver(options);
+            //webDriver = new ChromeDriver(options);
+
 
             //Run Remotely
             //------------
-            caps = DesiredCapabilities.safari();
+            caps = DesiredCapabilities.chrome();
+            caps.setCapability(ChromeOptions.CAPABILITY, options);
 
             return statement;
         }

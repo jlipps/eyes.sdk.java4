@@ -20,6 +20,7 @@ public class TestClassicApi_Firefox extends TestClassicApi {
         @Override
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Classic API";
+            testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
             forceFullPageScreenshot = false;
         }
     };

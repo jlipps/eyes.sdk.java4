@@ -3,20 +3,27 @@
  */
 package com.applitools.eyes.exceptions;
 
+import com.applitools.eyes.SessionStartInfo;
 import com.applitools.eyes.TestResults;
 
 /**
- * Indicates that a test did not pass (i.e., test either failed or is a new
- * test).
+ * Indicates that a test did not pass (i.e., test either failed or is a new test).
  */
 public class TestFailedException extends AssertionError {
 
     private TestResults testResults = null;
 
+    public TestFailedException(TestResults testResults, SessionStartInfo sessionStartInfo) {
+        super(String.format("'%s' of '%s'. See details at %s",
+                sessionStartInfo.getScenarioIdOrName(),
+                sessionStartInfo.getAppIdOrName(),
+                testResults.getUrl()));
+        this.testResults = testResults;
+    }
+
     /**
      * Creates a new TestFailedException instance.
-     * @param testResults The results of the current test if available,
-     *                      {@code null} otherwise.
+     * @param testResults The results of the current test if available, {@code null} otherwise.
      * @param message A description string.
      */
     public TestFailedException(TestResults testResults,
