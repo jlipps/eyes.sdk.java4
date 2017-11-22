@@ -7,6 +7,7 @@ import com.applitools.eyes.selenium.fluent.Target;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -37,12 +38,17 @@ public class CheckRegionInFrameOffsetTest {
 //        eyes.setDebugScreenshotsPath("c:\\temp\\logs");
 //        eyes.setSaveDebugScreenshots(true);
 
+        eyes.setHideScrollbars(true);
+
         try {
             driver = eyes.open(driver, "Eyes Selenium SDK", "WIX like test",
                     new RectangleSize(1024, 600));
 
             driver.get("http://applitools.github.io/demo/TestPages/WixLikeTestPage/index.html");
 
+            eyes.check("map-2", Target.window());
+            eyes.check("map-2", Target.window().fully());
+            eyes.check("map-1", Target.frame("frame1"));
             eyes.check("map", Target.frame("frame1").region(By.tagName("img")));
 
             eyes.close();

@@ -126,6 +126,10 @@ public class FullPageCaptureAlgorithm {
         RectangleSize entireSize;
         try {
             entireSize = positionProvider.getEntireSize();
+            entireSize = new RectangleSize(
+                    Math.max(entireSize.getWidth(), image.getWidth()),
+                    Math.max(entireSize.getHeight(), image.getHeight()));
+
             logger.verbose("Entire size of region context: " + entireSize);
         } catch (EyesDriverOperationException e) {
             logger.log("WARNING: Failed to extract entire size of region context" + e.getMessage());

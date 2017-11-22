@@ -127,8 +127,10 @@ public abstract class EyesBase {
     private void initProviders() {
         scaleProviderHandler = new SimplePropertyHandler<>();
         scaleProviderHandler.set(new NullScaleProvider());
-        cutProviderHandler = new SimplePropertyHandler<>();
-        cutProviderHandler.set(new NullCutProvider());
+        if (cutProviderHandler == null) {
+            cutProviderHandler = new SimplePropertyHandler<>();
+            cutProviderHandler.set(new NullCutProvider());
+        }
         positionProvider = new InvalidPositionProvider();
         viewportSizeHandler = new SimplePropertyHandler<>();
         viewportSizeHandler.set(null);
