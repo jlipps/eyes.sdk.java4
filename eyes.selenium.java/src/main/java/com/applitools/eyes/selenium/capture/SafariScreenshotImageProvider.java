@@ -20,12 +20,14 @@ public class SafariScreenshotImageProvider implements ImageProvider {
     private final Logger logger;
     private final TakesScreenshot tsInstance;
     private final IEyesJsExecutor jsExecutor;
+    private final UserAgent userAgent;
 
-    public SafariScreenshotImageProvider(Eyes eyes, Logger logger, TakesScreenshot tsInstance) {
+    public SafariScreenshotImageProvider(Eyes eyes, Logger logger, TakesScreenshot tsInstance, UserAgent userAgent) {
         this.eyes = eyes;
         this.logger = logger;
         this.tsInstance = tsInstance;
         this.jsExecutor = new SeleniumJavaScriptExecutor((EyesWebDriver) eyes.getDriver());
+        this.userAgent = userAgent;
     }
 
     @Override
@@ -36,6 +38,10 @@ public class SafariScreenshotImageProvider implements ImageProvider {
         BufferedImage image = ImageUtils.imageFromBase64(screenshot64);
 
         eyes.getDebugScreenshotsProvider().save(image, "SAFARI");
+
+        if (userAgent.getOS().equals("IOS")) {
+            image = ImageUtils.cropImage(image, new Region(0, 128, 750,1118));
+        }
 
         if (!eyes.getForceFullPageScreenshot()) {
 
@@ -54,9 +60,7 @@ public class SafariScreenshotImageProvider implements ImageProvider {
             viewportSize = viewportSize.scale(scaleRatio);
             loc = loc.scale(scaleRatio);
 
-            BufferedImage cutImage = ImageUtils.cropImage(image, new Region(loc,viewportSize));
-
-            return cutImage;
+            image = ImageUtils.cropImage(image, new Region(loc,viewportSize));
         }
 
         return image;
