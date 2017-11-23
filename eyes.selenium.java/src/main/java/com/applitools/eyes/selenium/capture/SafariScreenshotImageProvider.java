@@ -39,8 +39,20 @@ public class SafariScreenshotImageProvider implements ImageProvider {
 
         eyes.getDebugScreenshotsProvider().save(image, "SAFARI");
 
+        double scaleRatio = eyes.getDevicePixelRatio();
+        RectangleSize viewportSize = eyes.getViewportSize();
+        viewportSize = viewportSize.scale(scaleRatio);
+
         if (userAgent.getOS().equals("IOS")) {
-            image = ImageUtils.cropImage(image, new Region(0, 128, 750,1118));
+            image = ImageUtils.cropImage(
+                    image,
+                    new Region(
+                            0,
+                            (int) Math.ceil(64 * scaleRatio),
+                            viewportSize.getWidth(),
+                            viewportSize.getHeight()
+                    )
+            );
         }
 
         if (!eyes.getForceFullPageScreenshot()) {
@@ -55,12 +67,9 @@ public class SafariScreenshotImageProvider implements ImageProvider {
                 loc = currentFrameChain.getDefaultContentScrollPosition();
             }
 
-            double scaleRatio = eyes.getDevicePixelRatio();
-            RectangleSize viewportSize = eyes.getViewportSize();
-            viewportSize = viewportSize.scale(scaleRatio);
             loc = loc.scale(scaleRatio);
 
-            image = ImageUtils.cropImage(image, new Region(loc,viewportSize));
+            image = ImageUtils.cropImage(image, new Region(loc, viewportSize));
         }
 
         return image;
