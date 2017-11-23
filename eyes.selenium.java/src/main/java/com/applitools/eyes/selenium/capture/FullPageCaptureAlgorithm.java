@@ -7,6 +7,7 @@ import com.applitools.eyes.debug.DebugScreenshotsProvider;
 import com.applitools.eyes.CutProvider;
 import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.positioning.PositionProvider;
+import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.positioning.NullRegionPositionCompensation;
 import com.applitools.eyes.selenium.positioning.RegionPositionCompensation;
@@ -131,7 +132,7 @@ public class FullPageCaptureAlgorithm {
         try {
             ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
             Location originalCurrentPosition = spp.getCurrentPosition();
-            spp.setPosition(new Location(Integer.MAX_VALUE, Integer.MAX_VALUE));
+            spp.scrollToBottomRight();
             Location localCurrentPosition = spp.getCurrentPosition();
             entireSize = new RectangleSize(
                     localCurrentPosition.getX() + image.getWidth(),

@@ -68,4 +68,8 @@ public class ScrollPositionProvider implements PositionProvider {
         ScrollPositionMemento s = (ScrollPositionMemento) state;
         setPosition(new Location(s.getX(), s.getY()));
     }
+
+    public void scrollToBottomRight() {
+        EyesSeleniumUtils.scrollToBottomRight(this.executor);
+    }
 }

@@ -244,6 +244,13 @@ public class EyesSeleniumUtils {
     }
 
     /**
+     * Scrolls current frame to its bottom right.
+     * @param executor The executor to use.
+     */
+    public static void scrollToBottomRight(IEyesJsExecutor executor) {
+        executor.executeScript("window.scrollTo(document.body.scrollWidth, document.body.scrollHeight)");
+    }
+    /**
      *
      * @param executor The executor to use.
      * @return The size of the entire content.
