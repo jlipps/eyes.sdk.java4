@@ -1962,7 +1962,7 @@ public class Eyes extends EyesBase {
         EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
 
         FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
-        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent);
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent, jsExecutor);
         EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
 
         if (checkFrameOrElement) {
