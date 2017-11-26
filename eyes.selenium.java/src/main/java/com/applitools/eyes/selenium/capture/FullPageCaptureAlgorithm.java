@@ -7,9 +7,11 @@ import com.applitools.eyes.debug.DebugScreenshotsProvider;
 import com.applitools.eyes.CutProvider;
 import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.positioning.PositionProvider;
+import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.positioning.NullRegionPositionCompensation;
 import com.applitools.eyes.selenium.positioning.RegionPositionCompensation;
+import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.GeneralUtils;
 import com.applitools.utils.ImageUtils;
@@ -22,12 +24,15 @@ public class FullPageCaptureAlgorithm {
 
     private final Logger logger;
     private final UserAgent userAgent;
+    private final IEyesJsExecutor jsExecutor;
 
-    public FullPageCaptureAlgorithm(Logger logger, UserAgent userAgent) {
+    public FullPageCaptureAlgorithm(Logger logger, UserAgent userAgent, IEyesJsExecutor jsExecutor) {
         ArgumentGuard.notNull(logger, "logger");
         ArgumentGuard.notNull(userAgent, "userAgent");
+        ArgumentGuard.notNull(jsExecutor, "jsExecutor");
         this.logger = logger;
         this.userAgent = userAgent;
+        this.jsExecutor = jsExecutor;
     }
 
     private static void saveDebugScreenshotPart(DebugScreenshotsProvider debugScreenshotsProvider, BufferedImage image,
@@ -125,7 +130,16 @@ public class FullPageCaptureAlgorithm {
 
         RectangleSize entireSize;
         try {
-            entireSize = positionProvider.getEntireSize();
+            ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
+            Location originalCurrentPosition = spp.getCurrentPosition();
+            spp.scrollToBottomRight();
+            Location localCurrentPosition = spp.getCurrentPosition();
+            entireSize = new RectangleSize(
+                    localCurrentPosition.getX() + image.getWidth(),
+                    localCurrentPosition.getY() + image.getHeight());
+
+            spp.setPosition(originalCurrentPosition);
+
             logger.verbose("Entire size of region context: " + entireSize);
         } catch (EyesDriverOperationException e) {
             logger.log("WARNING: Failed to extract entire size of region context" + e.getMessage());

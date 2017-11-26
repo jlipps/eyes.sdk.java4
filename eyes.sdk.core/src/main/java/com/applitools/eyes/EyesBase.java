@@ -127,8 +127,10 @@ public abstract class EyesBase {
     private void initProviders() {
         scaleProviderHandler = new SimplePropertyHandler<>();
         scaleProviderHandler.set(new NullScaleProvider());
-        cutProviderHandler = new SimplePropertyHandler<>();
-        cutProviderHandler.set(new NullCutProvider());
+        if (cutProviderHandler == null) {
+            cutProviderHandler = new SimplePropertyHandler<>();
+            cutProviderHandler.set(new NullCutProvider());
+        }
         positionProvider = new InvalidPositionProvider();
         viewportSizeHandler = new SimplePropertyHandler<>();
         viewportSizeHandler.set(null);
@@ -1012,7 +1014,11 @@ public abstract class EyesBase {
         ArgumentGuard.isValidState(getIsOpen(), "Eyes not open");
         ArgumentGuard.notNull(regionProvider, "regionProvider");
 
+        beforeMatchWindow();
+
         result = matchWindow(regionProvider, tag, ignoreMismatch, checkSettings, this);
+
+        afterMatchWindow();
 
         logger.verbose("MatchWindow Done!");
 
@@ -1026,6 +1032,9 @@ public abstract class EyesBase {
         logger.verbose("Done!");
         return result;
     }
+
+    protected void beforeMatchWindow() { }
+    protected void afterMatchWindow() { }
 
     private static MatchResult matchWindow(RegionProvider regionProvider, String tag, boolean ignoreMismatch,
                                            ICheckSettings checkSettings, EyesBase self) {
@@ -1043,9 +1052,6 @@ public abstract class EyesBase {
 
             imageMatchSettings = new ImageMatchSettings(matchLevel, null);
 
-            collectIgnoreRegions(checkSettingsInternal, imageMatchSettings, self);
-            collectFloatingRegions(checkSettingsInternal, imageMatchSettings, self);
-
             Boolean ignoreCaret = checkSettingsInternal.getIgnoreCaret();
             imageMatchSettings.setIgnoreCaret((ignoreCaret == null) ? defaultMatchSettings.getIgnoreCaret() : ignoreCaret);
         }
@@ -1058,28 +1064,9 @@ public abstract class EyesBase {
         self.logger.verbose("Calling match window...");
 
         result = self.matchWindowTask.matchWindow(self.getUserInputs(), regionProvider.getRegion(), tag,
-                self.shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, imageMatchSettings, retryTimeout);
+                self.shouldMatchWindowRunOnceOnTimeout, ignoreMismatch, checkSettingsInternal, imageMatchSettings, retryTimeout);
 
         return result;
-    }
-
-    private static void collectIgnoreRegions(ICheckSettingsInternal checkSettingsInternal,
-                                      ImageMatchSettings imageMatchSettings, EyesBase self) {
-
-        List<Region> ignoreRegions = new ArrayList<>();
-        for (GetRegion ignoreRegionProvider : checkSettingsInternal.getIgnoreRegions()) {
-            ignoreRegions.add(ignoreRegionProvider.getRegion(self));
-        }
-        imageMatchSettings.setIgnoreRegions(ignoreRegions.toArray(new Region[0]));
-    }
-
-    private static void collectFloatingRegions(ICheckSettingsInternal checkSettingsInternal,
-                                               ImageMatchSettings imageMatchSettings, EyesBase self) {
-        List<FloatingMatchSettings> floatingRegions = new ArrayList<>();
-        for (GetFloatingRegion floatingRegionProvider : checkSettingsInternal.getFloatingRegions()) {
-            floatingRegions.add(floatingRegionProvider.getRegion(self));
-        }
-        imageMatchSettings.setFloatingRegions(floatingRegions.toArray(new FloatingMatchSettings[0]));
     }
 
     private void validateResult(String tag, MatchResult result) {
@@ -1223,6 +1210,8 @@ public abstract class EyesBase {
 
             this.isViewportSizeSet = false;
 
+            beforeOpen();
+
             this.currentAppName = appName != null ? appName : this.appName;
             this.testName = testName;
             viewportSizeHandler.set(viewportSize);
@@ -1233,12 +1222,18 @@ public abstract class EyesBase {
             }
 
             isOpen = true;
+
+            afterOpen();
+
         } catch (EyesException e) {
             logger.log(e.getMessage());
             logger.getLogHandler().close();
             throw e;
         }
     }
+
+    protected void beforeOpen() { }
+    protected void afterOpen() { }
 
     private void ensureRunningSession() {
         if (runningSession != null) {
@@ -1254,6 +1249,7 @@ public abstract class EyesBase {
                 serverConnector,
                 runningSession,
                 matchTimeout,
+                this,
                 // A callback which will call getAppOutput
                 new AppOutputProvider() {
                     @Override

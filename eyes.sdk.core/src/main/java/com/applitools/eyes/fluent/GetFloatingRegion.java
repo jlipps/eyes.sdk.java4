@@ -1,8 +1,9 @@
 package com.applitools.eyes.fluent;
 
 import com.applitools.eyes.EyesBase;
+import com.applitools.eyes.EyesScreenshot;
 import com.applitools.eyes.FloatingMatchSettings;
 
 public interface GetFloatingRegion {
-    FloatingMatchSettings getRegion(EyesBase eyesBase);
+    FloatingMatchSettings getRegion(EyesBase eyesBase, EyesScreenshot screenshot);
 }

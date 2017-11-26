@@ -1,6 +1,7 @@
 package com.applitools.eyes.fluent;
 
 import com.applitools.eyes.EyesBase;
+import com.applitools.eyes.EyesScreenshot;
 import com.applitools.eyes.Region;
 
 public class IgnoreRegionByRectangle implements GetRegion {
@@ -11,7 +12,7 @@ public class IgnoreRegionByRectangle implements GetRegion {
     }
 
     @Override
-    public Region getRegion(EyesBase eyesBase) {
+    public Region getRegion(EyesBase eyesBase, EyesScreenshot screenshot) {
         return this.region;
     }
 }

@@ -88,10 +88,7 @@ public class SeleniumCheckSettings extends CheckSettings implements ISeleniumChe
 
     public SeleniumCheckSettings ignore(WebElement... elements) {
         for (WebElement element : elements) {
-            Point loc = element.getLocation();
-            Dimension dim = element.getSize();
-            Region region = new Region(loc.getX(), loc.getY(), dim.getWidth(), dim.getHeight());
-            ignore(new IgnoreRegionByRectangle(region));
+            ignore(new IgnoreRegionByElement(element));
         }
 
         return this;
@@ -103,10 +100,7 @@ public class SeleniumCheckSettings extends CheckSettings implements ISeleniumChe
     }
 
     public SeleniumCheckSettings floating(WebElement element, int maxUpOffset, int maxDownOffset, int maxLeftOffset, int maxRightOffset) {
-        Point loc = element.getLocation();
-        Dimension dim = element.getSize();
-        Region region = new Region(loc.getX(), loc.getY(), dim.getWidth(), dim.getHeight());
-        floating(new FloatingRegionByRectangle(region, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset));
+        floating(new FloatingRegionByElement(element, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset));
         return this;
     }
 }

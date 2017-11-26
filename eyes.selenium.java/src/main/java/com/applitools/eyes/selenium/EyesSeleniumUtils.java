@@ -58,7 +58,7 @@ public class EyesSeleniumUtils {
     // element's width and its content width, scrollHeight might be
     // smaller (!) than the clientHeight, which is why we take the
     // maximum between them.
-    private static final String JS_GET_CONTENT_ENTIRE_SIZE =
+    private static final String JS_COMPUTE_CONTENT_ENTIRE_SIZE =
             "var scrollWidth = document.documentElement.scrollWidth; " +
                     "var bodyScrollWidth = document.body.scrollWidth; " +
                     "var totalWidth = Math.max(scrollWidth, bodyScrollWidth); " +
@@ -67,9 +67,14 @@ public class EyesSeleniumUtils {
                     "var scrollHeight = document.documentElement.scrollHeight; " +
                     "var bodyScrollHeight = document.body.scrollHeight; " +
                     "var maxDocElementHeight = Math.max(clientHeight, scrollHeight); " +
-                    "var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight); "
-                    + "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); "
-                    + "return [totalWidth, totalHeight];";
+                    "var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight); " +
+                    "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); ";
+
+    private static final String JS_RETURN_CONTENT_ENTIRE_SIZE =
+            JS_COMPUTE_CONTENT_ENTIRE_SIZE + "return [totalWidth, totalHeight];";
+
+    private static final String JS_SCROLL_TO_BOTTOM_RIGHT =
+            JS_COMPUTE_CONTENT_ENTIRE_SIZE + "window.scrollTo(totalWidth, totalHeight);";
 
     private static final String[] JS_TRANSFORM_KEYS = { "transform",
             "-webkit-transform"
@@ -244,6 +249,13 @@ public class EyesSeleniumUtils {
     }
 
     /**
+     * Scrolls current frame to its bottom right.
+     * @param executor The executor to use.
+     */
+    public static void scrollToBottomRight(IEyesJsExecutor executor) {
+        executor.executeScript(JS_SCROLL_TO_BOTTOM_RIGHT);
+    }
+    /**
      *
      * @param executor The executor to use.
      * @return The size of the entire content.
@@ -254,7 +266,7 @@ public class EyesSeleniumUtils {
         try {
             //noinspection unchecked
             List<Long> esAsList =
-                (List<Long>) executor.executeScript(JS_GET_CONTENT_ENTIRE_SIZE);
+                (List<Long>) executor.executeScript(JS_RETURN_CONTENT_ENTIRE_SIZE);
             result = new RectangleSize(esAsList.get(0).intValue(),
                     esAsList.get(1).intValue());
         } catch (WebDriverException e) {
