@@ -20,7 +20,7 @@ public class ImageProviderFactory {
                     return new TakesScreenshotImageProvider(logger, tsInstance);
                 }
             } else if (ua.getBrowser().equals(BrowserNames.Safari)) {
-                return new SafariScreenshotImageProvider(eyes, logger, tsInstance);
+                return new SafariScreenshotImageProvider(eyes, logger, tsInstance, ua);
             }
         }
         return new TakesScreenshotImageProvider(logger, tsInstance);
