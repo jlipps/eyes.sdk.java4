@@ -31,6 +31,7 @@ public abstract class TestSetup {
     protected static String testSuitName;
 
     protected static String testedPageUrl = "http://applitools.github.io/demo/TestPages/FramesTestPage/";
+    protected static RectangleSize testedPageSize = new RectangleSize(800, 599);
 
     protected static boolean forceFullPageScreenshot = false;
     protected static boolean runRemotely = true;
@@ -72,13 +73,13 @@ public abstract class TestSetup {
             driver = eyes.open(webDriver,
                     testSuitName,
                     description.getMethodName(),
-                    new RectangleSize(800, 599)
+                    testedPageSize
             );
 
             driver.navigate().to(testedPageUrl);
             //eyes.getPositionProvider().setPosition(new Location(100,200));
 
-            eyes.setDebugScreenshotsPrefix("Java_" + description.getMethodName() + "_" );
+            eyes.setDebugScreenshotsPrefix("Java_" + description.getMethodName() + "_");
         }
 
         protected void finished(Description description) {

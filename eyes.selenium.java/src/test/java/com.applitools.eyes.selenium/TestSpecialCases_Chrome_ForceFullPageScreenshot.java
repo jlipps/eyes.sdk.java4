@@ -1,5 +1,6 @@
 package com.applitools.eyes.selenium;
 
+import com.applitools.eyes.RectangleSize;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.ExternalResource;
@@ -20,6 +21,7 @@ public class TestSpecialCases_Chrome_ForceFullPageScreenshot extends TestSpecial
         protected void before() throws Throwable {
             testSuitName = "Eyes Selenium SDK - Special Cases - ForceFPS";
             testedPageUrl = "file:///C:/Users/USER/devel/demo_pages/TestPages/WixLikeTestPage/index.html";
+            testedPageSize = new RectangleSize(1024,600);
             hideScrollbars = true;
             forceFullPageScreenshot = true;
         }
