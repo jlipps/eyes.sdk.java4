@@ -23,6 +23,7 @@ public class Frame {
     protected final RectangleSize size;
     protected final RectangleSize innerSize;
     protected final Location originalLocation;
+    protected final String originalOverflow;
 
     /**
      * @param logger               A Logger instance.
@@ -31,10 +32,11 @@ public class Frame {
      * @param size                 The frame element size (i.e., the size of the frame on the screen, not the internal document size).
      * @param innerSize            The frame element inner size (i.e., the size of the frame actual size, without borders).
      * @param originalLocation     The scroll location of the frame.
+     * @param originalOverflow     The original overflow value of the frame.
      */
     public Frame(Logger logger, WebElement reference,
                  Location location, RectangleSize size, RectangleSize innerSize,
-                 Location originalLocation) {
+                 Location originalLocation, String originalOverflow) {
         ArgumentGuard.notNull(logger, "logger");
         ArgumentGuard.notNull(reference, "reference");
         ArgumentGuard.notNull(location, "location");
@@ -52,6 +54,7 @@ public class Frame {
         this.size = size;
         this.innerSize = innerSize;
         this.originalLocation = originalLocation;
+        this.originalOverflow = originalOverflow;
     }
 
     public WebElement getReference() {
@@ -72,6 +75,10 @@ public class Frame {
 
     public Location getOriginalLocation() {
         return originalLocation;
+    }
+
+    public String getOriginalOverflow() {
+        return originalOverflow;
     }
 
 }

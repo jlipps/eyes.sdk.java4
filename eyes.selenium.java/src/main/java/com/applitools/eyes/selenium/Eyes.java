@@ -69,7 +69,8 @@ public class Eyes extends EyesBase {
     private boolean forceFullPageScreenshot;
     private boolean checkFrameOrElement;
 
-    private String originalOverflow;
+    private String originalDefaultContentOverflow;
+    private String originalFrameOverflow;
 
     public Region getRegionToCheck() {
         return regionToCheck;
@@ -1656,9 +1657,11 @@ public class Eyes extends EyesBase {
                 elementPositionProvider = new ElementPositionProvider(logger, driver, eyesElement);
             }
 
-            // Set overflow to "hidden".
-            originalOverflow = eyesElement.getOverflow();
-            eyesElement.setOverflow("hidden");
+            if (hideScrollbars) {
+                // Set overflow to "hidden".
+                originalOverflow = eyesElement.getOverflow();
+                eyesElement.setOverflow("hidden");
+            }
 
             int elementWidth = eyesElement.getClientWidth();
             int elementHeight = eyesElement.getClientHeight();
@@ -1929,11 +1932,28 @@ public class Eyes extends EyesBase {
 
     private void tryHideScrollbars() {
         if (this.hideScrollbars) {
-            try {
-                this.originalOverflow = EyesSeleniumUtils.hideScrollbars(this.driver, 200);
-            } catch (EyesDriverOperationException e) {
-                logger.log("WARNING: Failed to hide scrollbars! Error: " + e.getMessage());
+            FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
+            FrameChain fc = new FrameChain(logger, driver.getFrameChain());
+            EyesSeleniumUtils.hideScrollbars(this.driver, 200);
+            while (fc.size() > 0) {
+                driver.getRemoteWebDriver().switchTo().parentFrame();
+                Frame frame = fc.pop();
+                EyesSeleniumUtils.hideScrollbars(this.driver, 200);
             }
+            ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
+        }
+    }
+
+    private void tryRestoreScrollbars() {
+        if (this.hideScrollbars) {
+            FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
+            FrameChain fc = new FrameChain(logger, driver.getFrameChain());
+            while (fc.size() > 0) {
+                driver.getRemoteWebDriver().switchTo().parentFrame();
+                Frame frame = fc.pop();
+                ((EyesRemoteWebElement)frame.getReference()).setOverflow(frame.getOriginalOverflow());
+            }
+            ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
         }
     }
 
