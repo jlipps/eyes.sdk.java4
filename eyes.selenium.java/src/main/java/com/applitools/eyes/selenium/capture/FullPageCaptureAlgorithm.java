@@ -128,23 +128,26 @@ public class FullPageCaptureAlgorithm {
             debugScreenshotsProvider.save(image, "scaled");
         }
 
-        RectangleSize entireSize;
-        try {
-            ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
-            Location originalCurrentPosition = spp.getCurrentPosition();
-            spp.scrollToBottomRight();
-            Location localCurrentPosition = spp.getCurrentPosition();
-            entireSize = new RectangleSize(
-                    localCurrentPosition.getX() + image.getWidth(),
-                    localCurrentPosition.getY() + image.getHeight());
+        boolean checkingAnElement = !region.isEmpty();
+        RectangleSize entireSize = positionProvider.getEntireSize();
+        if (!checkingAnElement) {
+            try {
+                ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
+                Location originalCurrentPosition = spp.getCurrentPosition();
+                spp.scrollToBottomRight();
+                Location localCurrentPosition = spp.getCurrentPosition();
+                entireSize = new RectangleSize(
+                        localCurrentPosition.getX() + image.getWidth(),
+                        localCurrentPosition.getY() + image.getHeight());
 
-            spp.setPosition(originalCurrentPosition);
+                spp.setPosition(originalCurrentPosition);
 
-            logger.verbose("Entire size of region context: " + entireSize);
-        } catch (EyesDriverOperationException e) {
-            logger.log("WARNING: Failed to extract entire size of region context" + e.getMessage());
-            logger.log("Using image size instead: " + image.getWidth() + "x" + image.getHeight());
-            entireSize = new RectangleSize(image.getWidth(), image.getHeight());
+                logger.verbose("Entire size of region context: " + entireSize);
+            } catch (EyesDriverOperationException e) {
+                logger.log("WARNING: Failed to extract entire size of region context" + e.getMessage());
+                logger.log("Using image size instead: " + image.getWidth() + "x" + image.getHeight());
+                entireSize = new RectangleSize(image.getWidth(), image.getHeight());
+            }
         }
 
         // Notice that this might still happen even if we used
