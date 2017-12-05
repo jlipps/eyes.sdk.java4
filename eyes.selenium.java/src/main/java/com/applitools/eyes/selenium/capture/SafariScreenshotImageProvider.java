@@ -43,7 +43,7 @@ public class SafariScreenshotImageProvider implements ImageProvider {
         RectangleSize viewportSize = eyes.getViewportSize();
         viewportSize = viewportSize.scale(scaleRatio);
 
-        if (userAgent.getOS().equals("IOS")) {
+        if (userAgent.getOS().equals(OSNames.IOS)) {
             image = ImageUtils.cropImage(
                     image,
                     new Region(
