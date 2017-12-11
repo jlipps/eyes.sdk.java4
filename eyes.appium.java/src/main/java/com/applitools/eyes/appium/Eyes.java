@@ -4,30 +4,20 @@
 package com.applitools.eyes.appium;
 
 import com.applitools.eyes.AppEnvironment;
-import com.applitools.eyes.Logger;
 import com.applitools.eyes.ScaleProviderFactory;
-import com.applitools.eyes.Trigger;
 import com.applitools.eyes.selenium.ContextBasedScaleProviderFactory;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
-import com.applitools.eyes.selenium.ImageOrientationHandler;
-import com.applitools.eyes.selenium.JavascriptHandler;
-import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
-import com.applitools.eyes.selenium.positioning.ImageRotation;
-import com.applitools.eyes.triggers.MouseTrigger;
-import com.applitools.utils.ArgumentGuard;
-import com.applitools.utils.ImageUtils;
+import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import io.appium.java_client.AppiumDriver;
-import org.openqa.selenium.ScreenOrientation;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-import java.awt.image.BufferedImage;
-
-import static com.applitools.eyes.selenium.EyesSeleniumUtils.getUnderlyingDriver;
 
 public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     private static final String NATIVE_APP = "NATIVE_APP";
+    protected EyesAppiumDriver driver;
 
     public Eyes() {
         init();
@@ -36,6 +26,22 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     private void init() {
         EyesSeleniumUtils.setImageOrientationHandlerHandler(new AppiumImageOrientationHandler());
         EyesSeleniumUtils.setJavascriptHandler(new AppiumJavascriptHandler(this.driver));
+    }
+
+    protected EyesAppiumDriver getEyesDriver () { return this.driver; }
+
+    @Override
+    protected void initDriver(WebDriver driver) {
+        if (driver instanceof AppiumDriver) {
+            logger.verbose("Found an instance of AppiumDriver, so using EyesAppiumDriver instead");
+            this.driver = new EyesAppiumDriver(logger, this, (AppiumDriver) driver);
+        } else {
+            logger.verbose("Did not find an instance of AppiumDriver, using regular logic");
+            /* TODO
+               when a breaking change of this library can be published, we can do away with
+               this else clause */
+            super.initDriver(driver);
+        }
     }
 
     protected ScaleProviderFactory getScaleProviderFactory() {

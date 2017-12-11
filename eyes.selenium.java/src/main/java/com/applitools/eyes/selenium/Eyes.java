@@ -136,6 +136,7 @@ public class Eyes extends EyesBase {
     public WebDriver getDriver() {
         return driver;
     }
+    protected EyesWebDriver getEyesDriver () { return this.driver; }
 
     /**
      * ﻿Forces a full page screenshot (by scrolling and stitching) if the
@@ -244,7 +245,7 @@ public class Eyes extends EyesBase {
     public void setRotation(ImageRotation rotation) {
         this.rotation = rotation;
         if (driver != null) {
-            driver.setRotation(rotation);
+            getEyesDriver().setRotation(rotation);
         }
     }
 
@@ -299,26 +300,27 @@ public class Eyes extends EyesBase {
 
         initDriver(driver);
 
-        String uaString = this.driver.getUserAgent();
+        logger.verbose("!!!! about to get user agent");
+        String uaString = getEyesDriver().getUserAgent();
         if (uaString != null) {
             userAgent = UserAgent.ParseUserAgentString(uaString, true);
         }
 
-        imageProvider = ImageProviderFactory.getImageProvider(userAgent, this, logger, this.driver);
+        imageProvider = ImageProviderFactory.getImageProvider(userAgent, this, logger, getEyesDriver());
         regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(userAgent, this, logger);
 
         openBase(appName, testName, viewportSize, sessionType);
         ArgumentGuard.notNull(driver, "driver");
 
         devicePixelRatio = UNKNOWN_DEVICE_PIXEL_RATIO;
-        this.jsExecutor = new SeleniumJavaScriptExecutor(this.driver);
+        this.jsExecutor = new SeleniumJavaScriptExecutor(getEyesDriver());
         initPositionProvider();
 
-        this.driver.setRotation(rotation);
-        return this.driver;
+        getEyesDriver().setRotation(rotation);
+        return getEyesDriver();
     }
 
-    private void initDriver(WebDriver driver) {
+    protected void initDriver(WebDriver driver) {
         if (driver instanceof RemoteWebDriver) {
             this.driver = new EyesWebDriver(logger, this, (RemoteWebDriver) driver);
         } else if (driver instanceof EyesWebDriver) {
@@ -648,7 +650,7 @@ public class Eyes extends EyesBase {
             By targetSelector = seleniumCheckTarget.getTargetSelector();
             WebElement targetElement = seleniumCheckTarget.getTargetElement();
             if (targetElement == null && targetSelector != null) {
-                targetElement = this.driver.findElement(targetSelector);
+                targetElement = getEyesDriver().findElement(targetSelector);
             }
             if (targetElement != null) {
                 this.targetElement = targetElement;
@@ -670,7 +672,7 @@ public class Eyes extends EyesBase {
         }
 
         while (switchedToFrameCount > 0) {
-            this.driver.switchTo().parentFrame();
+            getEyesDriver().switchTo().parentFrame();
             switchedToFrameCount--;
         }
 
@@ -680,11 +682,11 @@ public class Eyes extends EyesBase {
     }
 
     protected void checkFrameFluent(String name, ICheckSettings checkSettings) {
-        FrameChain frameChain = new FrameChain(logger, this.driver.getFrameChain());
+        FrameChain frameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
         Frame targetFrame = frameChain.pop();
         this.targetElement = targetFrame.getReference();
 
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.framesDoScroll(frameChain);
 
         this.checkRegion(name, checkSettings);
@@ -708,7 +710,7 @@ public class Eyes extends EyesBase {
     }
 
     private boolean switchToFrame(ISeleniumFrameCheckTarget frameTarget) {
-        WebDriver.TargetLocator switchTo = this.driver.switchTo();
+        WebDriver.TargetLocator switchTo = getEyesDriver().switchTo();
 
         if (frameTarget.getFrameIndex() != null) {
             switchTo.frame(frameTarget.getFrameIndex());
@@ -721,7 +723,7 @@ public class Eyes extends EyesBase {
         }
 
         if (frameTarget.getFrameSelector() != null) {
-            WebElement frameElement = this.driver.findElement(frameTarget.getFrameSelector());
+            WebElement frameElement = getEyesDriver().findElement(frameTarget.getFrameSelector());
             if (frameElement != null) {
                 switchTo.frame(frameElement);
                 return true;
@@ -752,10 +754,10 @@ public class Eyes extends EyesBase {
 
                     scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
 
-                    EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+                    EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
                     switchTo.frames(fc);
 
-                    final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
+                    final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
 
                     logger.verbose("replacing regionToCheck");
                     setRegionToCheck(screenshot.getFrameWindow());
@@ -769,14 +771,14 @@ public class Eyes extends EyesBase {
     }
 
     private FrameChain ensureFrameVisible() {
-        FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
-        FrameChain fc = new FrameChain(logger, driver.getFrameChain());
+        FrameChain originalFC = new FrameChain(logger, getEyesDriver().getFrameChain());
+        FrameChain fc = new FrameChain(logger, getEyesDriver().getFrameChain());
         while (fc.size() > 0) {
-            driver.getRemoteWebDriver().switchTo().parentFrame();
+            getEyesDriver().getRemoteWebDriver().switchTo().parentFrame();
             Frame frame = fc.pop();
             this.positionProvider.setPosition(frame.getLocation());
         }
-        ((EyesTargetLocator) driver.switchTo()).frames(originalFC);
+        ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
         return originalFC;
     }
 
@@ -786,10 +788,10 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        FrameChain originalFC = new FrameChain(logger, driver.getFrameChain());
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        FrameChain originalFC = new FrameChain(logger, getEyesDriver().getFrameChain());
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
 
-        EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, driver, element);
+        EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, getEyesDriver(), element);
         Region elementBounds = eyesRemoteWebElement.getBounds();
 
         Location currentFrameOffset = originalFC.getCurrentFrameOffset();
@@ -812,8 +814,8 @@ public class Eyes extends EyesBase {
     }
 
     private Region getViewportScrollBounds() {
-        FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.defaultContent();
         ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
         Location location = spp.getCurrentPosition();
@@ -1043,7 +1045,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        checkRegion(driver.findElement(selector), matchTimeout, tag);
+        checkRegion(getEyesDriver().findElement(selector), matchTimeout, tag);
     }
 
     /**
@@ -1126,7 +1128,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        driver.switchTo().frame(frameIndex);
+        getEyesDriver().switchTo().frame(frameIndex);
         this.stitchContent = stitchContent;
         if (stitchContent) {
             checkElement(selector, matchTimeout, tag);
@@ -1134,7 +1136,7 @@ public class Eyes extends EyesBase {
             checkRegion(selector, matchTimeout, tag);
         }
         this.stitchContent = false;
-        driver.switchTo().parentFrame();
+        getEyesDriver().switchTo().parentFrame();
     }
 
     /**
@@ -1203,7 +1205,7 @@ public class Eyes extends EyesBase {
                     frameNameOrId, matchTimeout, tag));
             return;
         }
-        driver.switchTo().frame(frameNameOrId);
+        getEyesDriver().switchTo().frame(frameNameOrId);
         this.stitchContent = stitchContent;
         if (stitchContent) {
             checkElement(selector, matchTimeout, tag);
@@ -1211,7 +1213,7 @@ public class Eyes extends EyesBase {
             checkRegion(selector, matchTimeout, tag);
         }
         this.stitchContent = false;
-        driver.switchTo().parentFrame();
+        getEyesDriver().switchTo().parentFrame();
     }
 
     /**
@@ -1281,7 +1283,7 @@ public class Eyes extends EyesBase {
                     matchTimeout, tag));
             return;
         }
-        driver.switchTo().frame(frameReference);
+        getEyesDriver().switchTo().frame(frameReference);
         this.stitchContent = stitchContent;
         if (stitchContent) {
             checkElement(selector, matchTimeout, tag);
@@ -1289,7 +1291,7 @@ public class Eyes extends EyesBase {
             checkRegion(selector, matchTimeout, tag);
         }
         this.stitchContent = false;
-        driver.switchTo().parentFrame();
+        getEyesDriver().switchTo().parentFrame();
     }
 
     /**
@@ -1346,7 +1348,7 @@ public class Eyes extends EyesBase {
             checkFrameOrElement = true;
 
             logger.verbose("Getting screenshot as base64..");
-            String screenshot64 = driver.getScreenshotAs(OutputType.BASE64);
+            String screenshot64 = getEyesDriver().getScreenshotAs(OutputType.BASE64);
             logger.verbose("Done! Creating image object...");
             BufferedImage screenshotImage = ImageUtils.imageFromBase64(screenshot64);
 
@@ -1389,7 +1391,7 @@ public class Eyes extends EyesBase {
      * using stitching to get an image of the frame.
      * @param frameNameOrId The name or id of the frame to check. (The same
      *                      name/id as would be used in a call to
-     *                      driver.switchTo().frame()).
+     *                      getEyesDriver().switchTo().frame()).
      * @param matchTimeout  The amount of time to retry matching. (Milliseconds)
      * @param tag           An optional tag to be associated with the match.
      */
@@ -1430,7 +1432,7 @@ public class Eyes extends EyesBase {
      * using stitching to get an image of the frame.
      * @param frameIndex   The index of the frame to switch to. (The same index
      *                     as would be used in a call to
-     *                     driver.switchTo().frame()).
+     *                     getEyesDriver().switchTo().frame()).
      * @param matchTimeout The amount of time to retry matching. (Milliseconds)
      * @param tag          An optional tag to be associated with the match.
      */
@@ -1469,7 +1471,7 @@ public class Eyes extends EyesBase {
      * using stitching to get an image of the frame.
      * @param frameReference The element which is the frame to switch to. (as
      *                       would be used in a call to
-     *                       driver.switchTo().frame() ).
+     *                       getEyesDriver().switchTo().frame() ).
      * @param matchTimeout   The amount of time to retry matching (milliseconds).
      * @param tag            An optional tag to be associated with the match.
      */
@@ -1485,13 +1487,13 @@ public class Eyes extends EyesBase {
         logger.log(String.format("CheckFrame(element, %d, '%s')", matchTimeout, tag));
 
         logger.verbose("Switching to frame based on element reference...");
-        driver.switchTo().frame(frameReference);
+        getEyesDriver().switchTo().frame(frameReference);
         logger.verbose("Done!");
 
         checkCurrentFrame(matchTimeout, tag);
 
         logger.verbose("Switching back to parent frame...");
-        driver.switchTo().parentFrame();
+        getEyesDriver().switchTo().parentFrame();
         logger.verbose("Done!");
     }
 
@@ -1516,20 +1518,20 @@ public class Eyes extends EyesBase {
         ArgumentGuard.greaterThanZero(framePath.length, "framePath.length");
         logger.log(String.format(
                 "checkFrame(framePath, %d, '%s')", matchTimeout, tag));
-        FrameChain originalFrameChain = driver.getFrameChain();
+        FrameChain originalFrameChain = getEyesDriver().getFrameChain();
         // We'll switch into the PARENT frame of the frame we want to check,
         // and call check frame.
         logger.verbose("Switching to parent frame according to frames path..");
         String[] parentFramePath = new String[framePath.length - 1];
         System.arraycopy(framePath, 0, parentFramePath, 0,
                 parentFramePath.length);
-        ((EyesTargetLocator) (driver.switchTo())).frames(parentFramePath);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(parentFramePath);
         logger.verbose("Done! Calling checkFrame..");
         checkFrame(framePath[framePath.length - 1], matchTimeout, tag);
         logger.verbose("Done! switching to default content..");
-        driver.switchTo().defaultContent();
+        getEyesDriver().switchTo().defaultContent();
         logger.verbose("Done! Switching back into the original frame..");
-        ((EyesTargetLocator) (driver.switchTo())).frames(originalFrameChain);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(originalFrameChain);
         logger.verbose("Done!");
     }
 
@@ -1572,19 +1574,19 @@ public class Eyes extends EyesBase {
         ArgumentGuard.greaterThanZero(framePath.length, "framePath.length");
         logger.log(String.format(
                 "checkFrame(framePath, %d, '%s')", matchTimeout, tag));
-        FrameChain originalFrameChain = driver.getFrameChain();
+        FrameChain originalFrameChain = getEyesDriver().getFrameChain();
         // We'll switch into the PARENT frame of the frame we want to check,
         // and call check frame.
         logger.verbose("Switching to parent frame according to frames path..");
         String[] parentFramePath = new String[framePath.length - 1];
         System.arraycopy(framePath, 0, parentFramePath, 0, parentFramePath.length);
-        ((EyesTargetLocator) (driver.switchTo())).frames(parentFramePath);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(parentFramePath);
         logger.verbose("Done! Calling checkRegionInFrame..");
         checkRegionInFrame(framePath[framePath.length - 1], selector, matchTimeout, tag, stitchContent);
         logger.verbose("Done! switching back to default content..");
-        driver.switchTo().defaultContent();
+        getEyesDriver().switchTo().defaultContent();
         logger.verbose("Done! Switching into the original frame..");
-        ((EyesTargetLocator) (driver.switchTo())).frames(originalFrameChain);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(originalFrameChain);
         logger.verbose("Done!");
     }
 
@@ -1737,7 +1739,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        checkElement(driver.findElement(selector), matchTimeout, tag);
+        checkElement(getEyesDriver().findElement(selector), matchTimeout, tag);
     }
 
     /**
@@ -1758,7 +1760,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!FrameChain.isSameFrameChain(driver.getFrameChain(),
+        if (!FrameChain.isSameFrameChain(getEyesDriver().getFrameChain(),
                 ((EyesWebDriverScreenshot) lastScreenshot).getFrameChain())) {
             logger.verbose(String.format("Ignoring %s (different frame)", action));
             return;
@@ -1792,7 +1794,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!FrameChain.isSameFrameChain(driver.getFrameChain(),
+        if (!FrameChain.isSameFrameChain(getEyesDriver().getFrameChain(),
                 ((EyesWebDriverScreenshot) lastScreenshot).getFrameChain())) {
             logger.verbose(String.format("Ignoring %s (different frame)", action));
             return;
@@ -1823,7 +1825,7 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        if (!FrameChain.isSameFrameChain(driver.getFrameChain(),
+        if (!FrameChain.isSameFrameChain(getEyesDriver().getFrameChain(),
                 ((EyesWebDriverScreenshot) lastScreenshot).getFrameChain())) {
             logger.verbose(String.format("Ignoring '%s' (different frame)", text));
             return;
@@ -1863,7 +1865,7 @@ public class Eyes extends EyesBase {
     public RectangleSize getViewportSize() {
         RectangleSize viewportSize = viewportSizeHandler.get();
         if (viewportSize == null) {
-            viewportSize = driver.getDefaultContentViewportSize();
+            viewportSize = getEyesDriver().getDefaultContentViewportSize();
         }
         return viewportSize;
     }
@@ -1893,18 +1895,18 @@ public class Eyes extends EyesBase {
             return;
         }
 
-        FrameChain originalFrame = driver.getFrameChain();
-        driver.switchTo().defaultContent();
+        FrameChain originalFrame = getEyesDriver().getFrameChain();
+        getEyesDriver().switchTo().defaultContent();
 
         try {
             EyesSeleniumUtils.setViewportSize(logger, driver, size);
         } catch (EyesException e) {
             // Just in case the user catches this error
-            ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
+            ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
 
             throw new TestFailedException("Failed to set the viewport size", e);
         }
-        ((EyesTargetLocator) driver.switchTo()).frames(originalFrame);
+        ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
         viewportSizeHandler.set(new RectangleSize(size.getWidth(), size.getHeight()));
     }
 
@@ -1981,9 +1983,9 @@ public class Eyes extends EyesBase {
 
         EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
 
-        FrameChain originalFrameChain = new FrameChain(logger, driver.getFrameChain());
+        FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
         FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent, jsExecutor);
-        EyesTargetLocator switchTo = (EyesTargetLocator) driver.switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
 
         if (checkFrameOrElement) {
             logger.verbose("Check frame/element requested");
@@ -2051,7 +2053,7 @@ public class Eyes extends EyesBase {
     protected String getTitle() {
         if (!dontGetTitle) {
             try {
-                return driver.getTitle();
+                return getEyesDriver().getTitle();
             } catch (Exception ex) {
                 logger.verbose("failed (" + ex.getMessage() + ")");
                 dontGetTitle = true;
@@ -2063,7 +2065,7 @@ public class Eyes extends EyesBase {
 
     @Override
     protected String getInferredEnvironment() {
-        String userAgent = driver.getUserAgent();
+        String userAgent = getEyesDriver().getUserAgent();
         if (userAgent != null) {
             return "useragent:" + userAgent;
         }
