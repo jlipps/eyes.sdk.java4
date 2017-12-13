@@ -5,7 +5,11 @@ import com.applitools.eyes.StdoutLogHandler;
 import io.appium.java_client.MobileBy;
 import io.appium.java_client.ios.IOSDriver;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 public class AppiumIOSFullPageScreenshotTest {
@@ -22,7 +26,7 @@ public class AppiumIOSFullPageScreenshotTest {
     capabilities.setCapability("useNewWDA", true);
 
     // Open the app.
-    WebDriver driver = new IOSDriver<>(new URL("http://127.0.0.1:4723/wd/hub"), capabilities);
+    IOSDriver driver = new IOSDriver<>(new URL("http://127.0.0.1:4723/wd/hub"), capabilities);
 
     // Initialize the eyes SDK and set your private API key.
     Eyes eyes = new Eyes();

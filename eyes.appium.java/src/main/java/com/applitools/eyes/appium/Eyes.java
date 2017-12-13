@@ -4,13 +4,18 @@
 package com.applitools.eyes.appium;
 
 import com.applitools.eyes.AppEnvironment;
+import com.applitools.eyes.Location;
+import com.applitools.eyes.Region;
 import com.applitools.eyes.ScaleProviderFactory;
+import com.applitools.eyes.capture.EyesScreenshotFactory;
+import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.ContextBasedScaleProviderFactory;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
-import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
+import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
+import com.applitools.eyes.selenium.capture.FullPageCaptureAlgorithm;
 import io.appium.java_client.AppiumDriver;
+import java.awt.image.BufferedImage;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 
@@ -97,5 +102,34 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         }
         logger.log("Done!");
         return appEnv;
+    }
+
+    @Override
+    protected void setDevicePixelRatio () {
+        devicePixelRatio = getEyesDriver().getDevicePixelRatio();
+    }
+
+    @Override
+    protected ScrollingPositionProvider getScrollPositionProvider () {
+        return new AppiumScrollPositionProvider(logger, getEyesDriver());
+    }
+
+    @Override
+    protected EyesWebDriverScreenshot getFullPageScreenshot (ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory, ScrollingPositionProvider scrollProvider) {
+        logger.verbose("Full page Appium screenshot requested.");
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
+
+        // TODO probably need to complicate this by looking at whether a scroll view is already scrolled
+        Location originalFramePosition = new Location(0, 0);
+
+        BufferedImage fullPageImage =
+            algo.getStitchedRegion(imageProvider, Region.EMPTY,
+                getScrollPositionProvider(),
+                positionProvider, scaleProviderFactory,
+                cutProviderHandler.get(),
+                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
+                getStitchOverlap(), regionPositionCompensation, scrollProvider);
+
+        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
     }
 }

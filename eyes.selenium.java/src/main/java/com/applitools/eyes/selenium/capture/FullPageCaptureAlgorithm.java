@@ -7,6 +7,7 @@ import com.applitools.eyes.debug.DebugScreenshotsProvider;
 import com.applitools.eyes.CutProvider;
 import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.positioning.PositionProvider;
+import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.positioning.NullRegionPositionCompensation;
@@ -23,16 +24,10 @@ public class FullPageCaptureAlgorithm {
     private static final int MIN_SCREENSHOT_PART_HEIGHT = 10;
 
     private final Logger logger;
-    private final UserAgent userAgent;
-    private final IEyesJsExecutor jsExecutor;
 
-    public FullPageCaptureAlgorithm(Logger logger, UserAgent userAgent, IEyesJsExecutor jsExecutor) {
+    public FullPageCaptureAlgorithm(Logger logger) {
         ArgumentGuard.notNull(logger, "logger");
-        ArgumentGuard.notNull(userAgent, "userAgent");
-        ArgumentGuard.notNull(jsExecutor, "jsExecutor");
         this.logger = logger;
-        this.userAgent = userAgent;
-        this.jsExecutor = jsExecutor;
     }
 
     private static void saveDebugScreenshotPart(DebugScreenshotsProvider debugScreenshotsProvider, BufferedImage image,
@@ -60,7 +55,7 @@ public class FullPageCaptureAlgorithm {
                                            PositionProvider positionProvider, ScaleProviderFactory scaleProviderFactory,
                                            CutProvider cutProvider, int waitBeforeScreenshots, DebugScreenshotsProvider debugScreenshotsProvider,
                                            EyesScreenshotFactory screenshotFactory, int stitchingOverlap,
-                                           RegionPositionCompensation regionPositionCompensation) {
+                                           RegionPositionCompensation regionPositionCompensation, ScrollingPositionProvider scrollProvider) {
         logger.verbose("getStitchedRegion()");
 
         ArgumentGuard.notNull(region, "region");
@@ -129,18 +124,18 @@ public class FullPageCaptureAlgorithm {
         }
 
         boolean checkingAnElement = !region.isEmpty();
-        RectangleSize entireSize = positionProvider.getEntireSize();
+        RectangleSize entireSize;
         if (!checkingAnElement) {
             try {
-                ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
-                Location originalCurrentPosition = spp.getCurrentPosition();
-                spp.scrollToBottomRight();
-                Location localCurrentPosition = spp.getCurrentPosition();
+                // TODO factor this out since with Appium we can simply retrieve the content size of a scrollable area and not have to calculate this here
+                Location originalCurrentPosition = scrollProvider.getCurrentPosition();
+                scrollProvider.scrollToBottomRight();
+                Location localCurrentPosition = scrollProvider.getCurrentPosition();
                 entireSize = new RectangleSize(
                         localCurrentPosition.getX() + image.getWidth(),
                         localCurrentPosition.getY() + image.getHeight());
 
-                spp.setPosition(originalCurrentPosition);
+                scrollProvider.setPosition(originalCurrentPosition);
 
                 logger.verbose("Entire size of region context: " + entireSize);
             } catch (EyesDriverOperationException e) {
@@ -148,6 +143,8 @@ public class FullPageCaptureAlgorithm {
                 logger.log("Using image size instead: " + image.getWidth() + "x" + image.getHeight());
                 entireSize = new RectangleSize(image.getWidth(), image.getHeight());
             }
+        } else {
+            entireSize = positionProvider.getEntireSize();
         }
 
         // Notice that this might still happen even if we used

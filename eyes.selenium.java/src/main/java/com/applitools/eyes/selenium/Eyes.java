@@ -13,6 +13,7 @@ import com.applitools.eyes.fluent.ICheckSettingsInternal;
 import com.applitools.eyes.positioning.NullRegionProvider;
 import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.positioning.RegionProvider;
+import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.scaling.FixedScaleProviderFactory;
 import com.applitools.eyes.scaling.NullScaleProvider;
 import com.applitools.eyes.selenium.capture.*;
@@ -84,7 +85,7 @@ public class Eyes extends EyesBase {
 
     private boolean hideScrollbars;
     private ImageRotation rotation;
-    private double devicePixelRatio;
+    protected double devicePixelRatio;
     private StitchMode stitchMode;
     private int waitBeforeScreenshots;
     private RegionVisibilityStrategy regionVisibilityStrategy;
@@ -92,8 +93,8 @@ public class Eyes extends EyesBase {
     private SeleniumJavaScriptExecutor jsExecutor;
 
     private UserAgent userAgent;
-    private ImageProvider imageProvider;
-    private RegionPositionCompensation regionPositionCompensation;
+    protected ImageProvider imageProvider;
+    protected RegionPositionCompensation regionPositionCompensation;
     private WebElement targetElement = null;
 
     private boolean stitchContent = false;
@@ -342,7 +343,7 @@ public class Eyes extends EyesBase {
                 setPositionProvider(new CssTranslatePositionProvider(logger, this.jsExecutor));
                 break;
             default:
-                setPositionProvider(new ScrollPositionProvider(logger, this.jsExecutor));
+                setPositionProvider(getScrollPositionProvider());
         }
     }
 
@@ -817,7 +818,7 @@ public class Eyes extends EyesBase {
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
         EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.defaultContent();
-        ScrollPositionProvider spp = new ScrollPositionProvider(logger, jsExecutor);
+        ScrollingPositionProvider spp = getScrollPositionProvider();
         Location location = spp.getCurrentPosition();
         Region viewportBounds = new Region(location, getViewportSize());
         switchTo.frames(originalFrameChain);
@@ -1302,15 +1303,7 @@ public class Eyes extends EyesBase {
         if (devicePixelRatio == UNKNOWN_DEVICE_PIXEL_RATIO &&
                 scaleProviderHandler.get() instanceof NullScaleProvider) {
             ScaleProviderFactory factory;
-            logger.verbose("Trying to extract device pixel ratio...");
-            try {
-                devicePixelRatio = EyesSeleniumUtils.getDevicePixelRatio(this.jsExecutor);
-            } catch (Exception e) {
-                logger.verbose(
-                        "Failed to extract device pixel ratio! Using default.");
-                devicePixelRatio = DEFAULT_DEVICE_PIXEL_RATIO;
-            }
-            logger.verbose(String.format("Device pixel ratio: %f", devicePixelRatio));
+            extractDevicePixelRatio();
 
             logger.verbose("Setting scale provider...");
             try {
@@ -1328,6 +1321,23 @@ public class Eyes extends EyesBase {
         // If we already have a scale provider set, we'll just use it, and pass a mock as provider handler.
         PropertyHandler<ScaleProvider> nullProvider = new SimplePropertyHandler<>();
         return new ScaleProviderIdentityFactory(scaleProviderHandler.get(), nullProvider);
+    }
+
+    protected void extractDevicePixelRatio() {
+        logger.verbose("Trying to extract device pixel ratio...");
+
+        try {
+            setDevicePixelRatio();
+        } catch (Exception e) {
+            logger.verbose(
+                "Failed to extract device pixel ratio! Using default.");
+            devicePixelRatio = DEFAULT_DEVICE_PIXEL_RATIO;
+        }
+        logger.verbose(String.format("Device pixel ratio: %f", devicePixelRatio));
+    }
+
+    protected void setDevicePixelRatio () {
+        devicePixelRatio = EyesSeleniumUtils.getDevicePixelRatio(this.jsExecutor);
     }
 
     private ScaleProviderFactory getScaleProviderFactory() {
@@ -1644,7 +1654,7 @@ public class Eyes extends EyesBase {
         this.regionToCheck = null;
 
         PositionProvider originalPositionProvider = positionProvider;
-        PositionProvider scrollPositionProvider = new ScrollPositionProvider(logger, jsExecutor);
+        PositionProvider scrollPositionProvider = getScrollPositionProvider();
         Location originalScrollPosition = scrollPositionProvider.getCurrentPosition();
 
         String originalOverflow = null;
@@ -1973,6 +1983,10 @@ public class Eyes extends EyesBase {
     }
     */
 
+    protected ScrollingPositionProvider getScrollPositionProvider () {
+        return new ScrollPositionProvider(logger, this.jsExecutor);
+    }
+
     @Override
     protected EyesScreenshot getScreenshot() {
 
@@ -1981,47 +1995,34 @@ public class Eyes extends EyesBase {
 
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
-        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, driver);
+        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
 
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
-        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger, userAgent, jsExecutor);
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
         EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
+        ScrollingPositionProvider scrollProvider = getScrollPositionProvider();
 
         if (checkFrameOrElement) {
+            // TODO factor this out into its own method which can be overridden by Appium
             logger.verbose("Check frame/element requested");
 
             switchTo.framesDoScroll(originalFrameChain);
 
             BufferedImage entireFrameOrElement =
                     algo.getStitchedRegion(imageProvider, regionToCheck,
-                            positionProvider, getElementPositionProvider(),
+                            positionProvider, getElementPositionProvider(), // TODO generalize getElementPositionProvider for appium
                             scaleProviderFactory,
                             cutProviderHandler.get(),
                             getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                            getStitchOverlap(), regionPositionCompensation);
+                            getStitchOverlap(), regionPositionCompensation, scrollProvider);
 
             logger.verbose("Building screenshot object...");
             result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
                     new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
         } else if (forceFullPageScreenshot || stitchContent) {
-            logger.verbose("Full page screenshot requested.");
-
-            // Save the current frame path.
-            Location originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);
-
-            switchTo.defaultContent();
-
-            BufferedImage fullPageImage =
-                    algo.getStitchedRegion(imageProvider, Region.EMPTY,
-                            new ScrollPositionProvider(logger, this.jsExecutor),
-                            positionProvider, scaleProviderFactory,
-                            cutProviderHandler.get(),
-                            getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                            getStitchOverlap(), regionPositionCompensation);
-
-            switchTo.frames(originalFrameChain);
-            result = new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
+            result = getFullPageScreenshot(scaleProviderFactory, screenshotFactory, scrollProvider);
         } else {
+            // TODO factor this out into its own method which can be overridden by Appium
             ensureElementVisible(this.targetElement);
 
             logger.verbose("Screenshot requested...");
@@ -2047,6 +2048,29 @@ public class Eyes extends EyesBase {
         }
         logger.verbose("Done!");
         return result;
+    }
+
+    protected EyesWebDriverScreenshot getFullPageScreenshot (ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory, ScrollingPositionProvider scrollProvider) {
+        logger.verbose("Full page screenshot requested.");
+
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
+        FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
+        // Save the current frame path.
+        Location originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);
+
+        switchTo.defaultContent();
+
+        BufferedImage fullPageImage =
+            algo.getStitchedRegion(imageProvider, Region.EMPTY,
+                getScrollPositionProvider(),
+                positionProvider, scaleProviderFactory,
+                cutProviderHandler.get(),
+                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
+                getStitchOverlap(), regionPositionCompensation, scrollProvider);
+
+        switchTo.frames(originalFrameChain);
+        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
     }
 
     @Override

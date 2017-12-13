@@ -76,7 +76,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
         this.logger = logger;
         this.eyes = eyes;
-        this.driver = driver;
+        this.setRemoteWebDriver(driver);
 
         this.elementsIds = new HashMap<>();
         this.frameChain = new FrameChain(logger);
@@ -107,6 +107,8 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
         return driver;
     }
 
+    public void setRemoteWebDriver(RemoteWebDriver driver) { this.driver = driver; }
+
     public TouchScreen getTouch() {
         return touch;
     }
@@ -129,19 +131,19 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
     public void get(String s) {
         frameChain.clear();
-        driver.get(s);
+        getRemoteWebDriver().get(s);
     }
 
     public String getCurrentUrl() {
-        return driver.getCurrentUrl();
+        return getRemoteWebDriver().getCurrentUrl();
     }
 
     public String getTitle() {
-        return driver.getTitle();
+        return getRemoteWebDriver().getTitle();
     }
 
     public List<WebElement> findElements(By by) {
-        List<WebElement> foundWebElementsList = driver.findElements(by);
+        List<WebElement> foundWebElementsList = getRemoteWebDriver().findElements(by);
 
         // This list will contain the found elements wrapped with our class.
         List<WebElement> resultElementsList =
@@ -167,7 +169,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     }
 
     public WebElement findElement(By by) {
-        WebElement webElement = driver.findElement(by);
+        WebElement webElement = getRemoteWebDriver().findElement(by);
         if (webElement instanceof RemoteWebElement) {
             webElement = new EyesRemoteWebElement(logger, this, webElement);
 
@@ -193,44 +195,44 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     }
 
     public String getPageSource() {
-        return driver.getPageSource();
+        return getRemoteWebDriver().getPageSource();
     }
 
     public void close() {
-        driver.close();
+        getRemoteWebDriver().close();
     }
 
     public void quit() {
-        driver.quit();
+        getRemoteWebDriver().quit();
     }
 
     public Set<String> getWindowHandles() {
-        return driver.getWindowHandles();
+        return getRemoteWebDriver().getWindowHandles();
     }
 
     public String getWindowHandle() {
-        return driver.getWindowHandle();
+        return getRemoteWebDriver().getWindowHandle();
     }
 
     public TargetLocator switchTo() {
         logger.verbose("switchTo()");
-        return new EyesTargetLocator(logger, this, driver.switchTo());
+        return new EyesTargetLocator(logger, this, getRemoteWebDriver().switchTo());
     }
 
     public Navigation navigate() {
-        return driver.navigate();
+        return getRemoteWebDriver().navigate();
     }
 
     public Options manage() {
-        return driver.manage();
+        return getRemoteWebDriver().manage();
     }
 
     public Mouse getMouse() {
-        return new EyesMouse(logger, this, driver.getMouse());
+        return new EyesMouse(logger, this, getRemoteWebDriver().getMouse());
     }
 
     public Keyboard getKeyboard() {
-        return new EyesKeyboard(logger, this, driver.getKeyboard());
+        return new EyesKeyboard(logger, this, getRemoteWebDriver().getKeyboard());
     }
 
     public WebElement findElementByClassName(String className) {
@@ -298,18 +300,18 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     }
 
     public Capabilities getCapabilities() {
-        return driver.getCapabilities();
+        return getRemoteWebDriver().getCapabilities();
     }
 
     public Object executeScript(String script, Object... args) {
         EyesSeleniumUtils.handleSpecialCommands(script, args);
-        Object result = driver.executeScript(script, args);
+        Object result = getRemoteWebDriver().executeScript(script, args);
         return result;
     }
 
     public Object executeAsyncScript(String script, Object... args) {
         EyesSeleniumUtils.handleSpecialCommands(script, args);
-        Object result = driver.executeAsyncScript(script, args);
+        Object result = getRemoteWebDriver().executeAsyncScript(script, args);
         return result;
     }
 
@@ -361,9 +363,9 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     public <X> X getScreenshotAs(OutputType<X> xOutputType)
             throws WebDriverException {
         // Get the image as base64.
-        String screenshot64 = driver.getScreenshotAs(OutputType.BASE64);
+        String screenshot64 = getRemoteWebDriver().getScreenshotAs(OutputType.BASE64);
         BufferedImage screenshot = ImageUtils.imageFromBase64(screenshot64);
-        screenshot = normalizeRotation(logger, driver, screenshot, rotation);
+        screenshot = normalizeRotation(logger, getRemoteWebDriver(), screenshot, rotation);
 
         // Return the image in the requested format.
         screenshot64 = ImageUtils.base64FromImage(screenshot);
@@ -373,7 +375,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     public String getUserAgent() {
         String userAgent;
         try {
-            userAgent = (String) this.driver.executeScript("return navigator.userAgent");
+            userAgent = (String) getRemoteWebDriver().executeScript("return navigator.userAgent");
             logger.verbose("user agent: " + userAgent);
         } catch (Exception e) {
             logger.verbose("Failed to obtain user-agent string");
@@ -385,6 +387,6 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
     private String getSessionId() {
         // extract remote web driver information
-        return driver.getSessionId().toString();
+        return getRemoteWebDriver().getSessionId().toString();
     }
 }

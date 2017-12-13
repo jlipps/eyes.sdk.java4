@@ -6,13 +6,38 @@ import com.applitools.eyes.selenium.Eyes;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import io.appium.java_client.AppiumDriver;
 import java.util.HashMap;
+import java.util.Map;
 import org.openqa.selenium.Capabilities;
 
 public class EyesAppiumDriver extends EyesWebDriver {
 
+  private Map<String, Object> sessionDetails;
 
   public EyesAppiumDriver(Logger logger, Eyes eyes, AppiumDriver driver) {
     super(logger, eyes, driver);
+  }
+
+  @Override
+  public AppiumDriver getRemoteWebDriver () { return (AppiumDriver) this.driver; }
+
+  private Map<String, Object> getCachedSessionDetails () {
+    if(sessionDetails == null) {
+      logger.verbose("Retrieving session details and caching the result...");
+      sessionDetails = getRemoteWebDriver().getSessionDetails();
+    }
+    return sessionDetails;
+  }
+
+  public HashMap<String, Integer> getViewportRect () {
+    Map<String, Long> rectMap = (Map<String, Long>) getCachedSessionDetails().get("viewportRect");
+    HashMap<String, Integer> intRectMap = new HashMap<String, Integer>();
+    intRectMap.put("width", rectMap.get("width").intValue());
+    intRectMap.put("height", rectMap.get("height").intValue());
+    return intRectMap;
+  }
+
+  public double getDevicePixelRatio () {
+    return ((Long) getCachedSessionDetails().get("pixelRatio")).doubleValue();
   }
 
   /**
@@ -27,19 +52,8 @@ public class EyesAppiumDriver extends EyesWebDriver {
       return defaultContentViewportSize;
     }
 
-    logger.verbose("Retrieving session capabilities to get viewport size...");
-    Capabilities caps;
-    try {
-      // TODO figure out why this is throwing NPE
-      caps = driver.getCapabilities();
-    } catch (Exception e) {
-      logger.verbose(e.toString());
-      return new RectangleSize(0, 0);
-    }
-    logger.verbose("Extracting viewport size from capabilities...");
-    logger.verbose((String) caps.getCapability("viewportRect"));
-    HashMap<String, Integer> rectMap = (HashMap<String, Integer>) caps.getCapability("viewportRect");
-    defaultContentViewportSize = new RectangleSize(rectMap.get("width"), rectMap.get("height"));
+    HashMap<String, Integer> rect = getViewportRect();
+    defaultContentViewportSize = new RectangleSize(rect.get("width"), rect.get("height"));
     logger.verbose("Done! Viewport size: " + defaultContentViewportSize);
 
     return defaultContentViewportSize;
