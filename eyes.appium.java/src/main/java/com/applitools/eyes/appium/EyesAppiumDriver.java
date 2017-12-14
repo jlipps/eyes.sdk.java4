@@ -20,6 +20,12 @@ public class EyesAppiumDriver extends EyesWebDriver {
   @Override
   public AppiumDriver getRemoteWebDriver () { return (AppiumDriver) this.driver; }
 
+  @Override
+  public TargetLocator switchTo() {
+      logger.verbose("Appium switchTo()");
+      return new EyesAppiumTargetLocator(logger, this, getRemoteWebDriver().switchTo());
+  }
+
   private Map<String, Object> getCachedSessionDetails () {
     if(sessionDetails == null) {
       logger.verbose("Retrieving session details and caching the result...");

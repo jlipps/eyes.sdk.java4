@@ -11,7 +11,7 @@ import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
 import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
-import com.applitools.eyes.selenium.wrappers.EyesTargetLocator;
+import com.applitools.eyes.selenium.wrappers.EyesWebTargetLocator;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
@@ -49,7 +49,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         FrameChain originalFC = new FrameChain(logger, currentFrames);
 
-        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
+        EyesWebTargetLocator switchTo = (EyesWebTargetLocator)driver.switchTo();
         switchTo.defaultContent();
         Location defaultContentScrollPosition = positionProvider.getCurrentPosition();
         switchTo.frames(originalFC);

@@ -216,7 +216,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
     public TargetLocator switchTo() {
         logger.verbose("switchTo()");
-        return new EyesTargetLocator(logger, this, getRemoteWebDriver().switchTo());
+        return new EyesWebTargetLocator(logger, this, getRemoteWebDriver().switchTo());
     }
 
     public Navigation navigate() {
@@ -327,7 +327,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
             return defaultContentViewportSize;
         }
 
-        EyesTargetLocator switchTo = (EyesTargetLocator)switchTo();
+        EyesWebTargetLocator switchTo = (EyesWebTargetLocator)switchTo();
         FrameChain currentFrames = new FrameChain(logger, getFrameChain());
 
         // Optimization
