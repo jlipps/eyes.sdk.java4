@@ -3,7 +3,22 @@
  */
 package com.applitools.eyes.selenium;
 
-import com.applitools.eyes.*;
+import com.applitools.eyes.CoordinatesType;
+import com.applitools.eyes.CutProvider;
+import com.applitools.eyes.EyesBase;
+import com.applitools.eyes.EyesException;
+import com.applitools.eyes.EyesScreenshot;
+import com.applitools.eyes.Location;
+import com.applitools.eyes.Logger;
+import com.applitools.eyes.MatchWindowDataWithScreenshot;
+import com.applitools.eyes.NullCutProvider;
+import com.applitools.eyes.RectangleSize;
+import com.applitools.eyes.Region;
+import com.applitools.eyes.ScaleProvider;
+import com.applitools.eyes.ScaleProviderFactory;
+import com.applitools.eyes.ScaleProviderIdentityFactory;
+import com.applitools.eyes.SessionType;
+import com.applitools.eyes.UserAgent;
 import com.applitools.eyes.capture.EyesScreenshotFactory;
 import com.applitools.eyes.capture.ImageProvider;
 import com.applitools.eyes.diagnostics.TimedAppOutput;
@@ -16,7 +31,10 @@ import com.applitools.eyes.positioning.RegionProvider;
 import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.scaling.FixedScaleProviderFactory;
 import com.applitools.eyes.scaling.NullScaleProvider;
-import com.applitools.eyes.selenium.capture.*;
+import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
+import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshotFactory;
+import com.applitools.eyes.selenium.capture.FullPageCaptureAlgorithm;
+import com.applitools.eyes.selenium.capture.ImageProviderFactory;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.fluent.FrameLocator;
 import com.applitools.eyes.selenium.fluent.ISeleniumCheckTarget;
@@ -24,23 +42,34 @@ import com.applitools.eyes.selenium.fluent.ISeleniumFrameCheckTarget;
 import com.applitools.eyes.selenium.fluent.Target;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
-import com.applitools.eyes.selenium.positioning.*;
+import com.applitools.eyes.selenium.positioning.CssTranslatePositionProvider;
+import com.applitools.eyes.selenium.positioning.ElementPositionProvider;
+import com.applitools.eyes.selenium.positioning.ImageRotation;
+import com.applitools.eyes.selenium.positioning.RegionPositionCompensation;
+import com.applitools.eyes.selenium.positioning.RegionPositionCompensationFactory;
+import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
 import com.applitools.eyes.selenium.regionVisibility.MoveToRegionVisibilityStrategy;
 import com.applitools.eyes.selenium.regionVisibility.NopRegionVisibilityStrategy;
 import com.applitools.eyes.selenium.regionVisibility.RegionVisibilityStrategy;
 import com.applitools.eyes.selenium.wrappers.EyesRemoteWebElement;
-import com.applitools.eyes.selenium.wrappers.EyesWebTargetLocator;
+import com.applitools.eyes.selenium.wrappers.EyesTargetLocator;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.eyes.triggers.MouseAction;
-import com.applitools.utils.*;
-import org.openqa.selenium.*;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.remote.RemoteWebDriver;
-
+import com.applitools.utils.ArgumentGuard;
+import com.applitools.utils.ImageUtils;
+import com.applitools.utils.PropertyHandler;
+import com.applitools.utils.ReadOnlyPropertyHandler;
+import com.applitools.utils.SimplePropertyHandler;
 import java.awt.image.BufferedImage;
 import java.net.URI;
 import java.util.List;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.Point;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 /**
  * The main API gateway for the SDK.
@@ -687,7 +716,7 @@ public class Eyes extends EyesBase {
         Frame targetFrame = frameChain.pop();
         this.targetElement = targetFrame.getReference();
 
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator) getEyesDriver().switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.framesDoScroll(frameChain);
 
         this.checkRegion(name, checkSettings);
@@ -755,7 +784,7 @@ public class Eyes extends EyesBase {
 
                     scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
 
-                    EyesWebTargetLocator switchTo = (EyesWebTargetLocator) getEyesDriver().switchTo();
+                    EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
                     switchTo.frames(fc);
 
                     final EyesWebDriverScreenshot screenshot = new EyesWebDriverScreenshot(logger, getEyesDriver(), screenshotImage);
@@ -779,7 +808,7 @@ public class Eyes extends EyesBase {
             Frame frame = fc.pop();
             this.positionProvider.setPosition(frame.getLocation());
         }
-        ((EyesWebTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
+        ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
         return originalFC;
     }
 
@@ -790,7 +819,7 @@ public class Eyes extends EyesBase {
         }
 
         FrameChain originalFC = new FrameChain(logger, getEyesDriver().getFrameChain());
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator) getEyesDriver().switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
 
         EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, getEyesDriver(), element);
         Region elementBounds = eyesRemoteWebElement.getBounds();
@@ -816,7 +845,7 @@ public class Eyes extends EyesBase {
 
     private Region getViewportScrollBounds() {
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator) getEyesDriver().switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         switchTo.defaultContent();
         ScrollingPositionProvider spp = getScrollPositionProvider();
         Location location = spp.getCurrentPosition();
@@ -1535,13 +1564,13 @@ public class Eyes extends EyesBase {
         String[] parentFramePath = new String[framePath.length - 1];
         System.arraycopy(framePath, 0, parentFramePath, 0,
                 parentFramePath.length);
-        ((EyesWebTargetLocator) (getEyesDriver().switchTo())).frames(parentFramePath);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(parentFramePath);
         logger.verbose("Done! Calling checkFrame..");
         checkFrame(framePath[framePath.length - 1], matchTimeout, tag);
         logger.verbose("Done! switching to default content..");
         getEyesDriver().switchTo().defaultContent();
         logger.verbose("Done! Switching back into the original frame..");
-        ((EyesWebTargetLocator) (getEyesDriver().switchTo())).frames(originalFrameChain);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(originalFrameChain);
         logger.verbose("Done!");
     }
 
@@ -1590,13 +1619,13 @@ public class Eyes extends EyesBase {
         logger.verbose("Switching to parent frame according to frames path..");
         String[] parentFramePath = new String[framePath.length - 1];
         System.arraycopy(framePath, 0, parentFramePath, 0, parentFramePath.length);
-        ((EyesWebTargetLocator) (getEyesDriver().switchTo())).frames(parentFramePath);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(parentFramePath);
         logger.verbose("Done! Calling checkRegionInFrame..");
         checkRegionInFrame(framePath[framePath.length - 1], selector, matchTimeout, tag, stitchContent);
         logger.verbose("Done! switching back to default content..");
         getEyesDriver().switchTo().defaultContent();
         logger.verbose("Done! Switching into the original frame..");
-        ((EyesWebTargetLocator) (getEyesDriver().switchTo())).frames(originalFrameChain);
+        ((EyesTargetLocator) (getEyesDriver().switchTo())).frames(originalFrameChain);
         logger.verbose("Done!");
     }
 
@@ -1912,11 +1941,11 @@ public class Eyes extends EyesBase {
             EyesSeleniumUtils.setViewportSize(logger, driver, size);
         } catch (EyesException e) {
             // Just in case the user catches this error
-            ((EyesWebTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
+            ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
 
             throw new TestFailedException("Failed to set the viewport size", e);
         }
-        ((EyesWebTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
+        ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFrame);
         viewportSizeHandler.set(new RectangleSize(size.getWidth(), size.getHeight()));
     }
 
@@ -1999,7 +2028,7 @@ public class Eyes extends EyesBase {
 
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
         FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator) getEyesDriver().switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         ScrollingPositionProvider scrollProvider = getScrollPositionProvider();
 
         if (checkFrameOrElement) {
@@ -2054,7 +2083,7 @@ public class Eyes extends EyesBase {
         logger.verbose("Full page screenshot requested.");
 
         FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator) getEyesDriver().switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
         // Save the current frame path.
         Location originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);

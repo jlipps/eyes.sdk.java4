@@ -327,7 +327,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
             return defaultContentViewportSize;
         }
 
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator)switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator)switchTo();
         FrameChain currentFrames = new FrameChain(logger, getFrameChain());
 
         // Optimization

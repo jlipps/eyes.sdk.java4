@@ -3,24 +3,31 @@
  */
 package com.applitools.eyes.selenium.capture;
 
-import com.applitools.eyes.*;
+import com.applitools.eyes.CoordinatesType;
+import com.applitools.eyes.EyesException;
+import com.applitools.eyes.EyesScreenshot;
+import com.applitools.eyes.IEyesJsExecutor;
+import com.applitools.eyes.Location;
+import com.applitools.eyes.Logger;
+import com.applitools.eyes.OutOfBoundsException;
+import com.applitools.eyes.RectangleSize;
+import com.applitools.eyes.Region;
 import com.applitools.eyes.exceptions.CoordinatesTypeConversionException;
 import com.applitools.eyes.positioning.PositionProvider;
-import com.applitools.eyes.selenium.*;
+import com.applitools.eyes.selenium.SeleniumJavaScriptExecutor;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
 import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
-import com.applitools.eyes.selenium.wrappers.EyesWebTargetLocator;
+import com.applitools.eyes.selenium.wrappers.EyesTargetLocator;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
+import java.awt.image.BufferedImage;
+import java.util.Iterator;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
-
-import java.awt.image.BufferedImage;
-import java.util.Iterator;
 
 public class EyesWebDriverScreenshot extends EyesScreenshot {
 
@@ -49,7 +56,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
 
         FrameChain originalFC = new FrameChain(logger, currentFrames);
 
-        EyesWebTargetLocator switchTo = (EyesWebTargetLocator)driver.switchTo();
+        EyesTargetLocator switchTo = (EyesTargetLocator)driver.switchTo();
         switchTo.defaultContent();
         Location defaultContentScrollPosition = positionProvider.getCurrentPosition();
         switchTo.frames(originalFC);
