@@ -9,11 +9,17 @@ import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.positioning.ScrollPositionMemento;
 import com.applitools.utils.ArgumentGuard;
 import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.MobileBy;
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.Point;
+import org.openqa.selenium.WebElement;
 
 public class AppiumScrollPositionProvider implements ScrollingPositionProvider {
 
   protected final Logger logger;
   protected final AppiumDriver driver;
+  protected final EyesAppiumDriver eyesDriver;
 
   public AppiumScrollPositionProvider (Logger logger, EyesAppiumDriver driver) {
     ArgumentGuard.notNull(logger, "logger");
@@ -21,6 +27,19 @@ public class AppiumScrollPositionProvider implements ScrollingPositionProvider {
 
     this.logger = logger;
     this.driver = driver.getRemoteWebDriver();
+    this.eyesDriver = driver;
+  }
+
+  private WebElement getActiveScrollView () {
+      // the 'active' scroll view is either the one added to the chain most recently, or if the chain is empty, the first scroll view we find
+      if (eyesDriver.getFrameChain().size() > 0) {
+          return eyesDriver.getFrameChain().peek().getReference();
+      }
+      try {
+          return driver.findElementByXPath("//*[@scrollable='true']");
+      } catch (NoSuchElementException e) {
+          throw new NoSuchElementException("Tried to get the active scroll view but none was found");
+      }
   }
 
   /**
@@ -28,14 +47,18 @@ public class AppiumScrollPositionProvider implements ScrollingPositionProvider {
    */
   public Location getCurrentPosition() {
     logger.verbose("ScrollPositionProvider - getCurrentPosition()");
-    Location result = new Location(0, 0);
-//    try {
-//      result = EyesSeleniumUtils.getCurrentScrollPosition(executor);
-//    } catch (WebDriverException e) {
-//      throw new EyesDriverOperationException("Failed to extract current scroll position!", e);
-//    }
-//    logger.verbose("Current position: " + result);
-    return result;
+    WebElement activeScroll;
+    try {
+        activeScroll = getActiveScrollView();
+    } catch (NoSuchElementException e) {
+        return new Location(0, 0);
+    }
+    // TODO cache first visible child
+    WebElement firstVisChild = activeScroll.findElement(By.xpath("/*[@firstVisible='true']"));
+    Point loc = activeScroll.getLocation();
+    Point childLoc = firstVisChild.getLocation();
+    // the position of the scrollview is basically the offset of the first visible child
+    return new Location(childLoc.x - loc.x, childLoc.y - loc.y);
   }
 
   /**
