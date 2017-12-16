@@ -52,8 +52,7 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
 
         ArgumentGuard.notNull(targetFrame, "targetFrame");
 
-        EyesRemoteWebElement eyesFrame = (targetFrame instanceof EyesRemoteWebElement) ?
-            (EyesRemoteWebElement) targetFrame : new EyesRemoteWebElement(logger, getDriver(), targetFrame);
+        EyesRemoteWebElement eyesFrame = getDriver().getEyesElement(targetFrame);
 
         Point pl = targetFrame.getLocation();
         Dimension ds = targetFrame.getSize();
@@ -217,7 +216,7 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
         if (!(element instanceof RemoteWebElement)) {
             throw new EyesException("Not a remote web element!");
         }
-        EyesRemoteWebElement result = new EyesRemoteWebElement(logger, getDriver(), (RemoteWebElement) element);
+        EyesRemoteWebElement result = getDriver().getEyesElement(element);
         logger.verbose("Done!");
         return result;
     }

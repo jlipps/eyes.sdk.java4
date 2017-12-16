@@ -14,8 +14,11 @@ import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
 import com.applitools.eyes.selenium.capture.FullPageCaptureAlgorithm;
 import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.MobileBy;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 
@@ -132,4 +135,11 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
         return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
     }
+
+    @Override
+    public void beforeMatchWindow () {
+        super.beforeMatchWindow();
+        getEyesDriver().initScrollviewsAsFrames();
+    }
+
 }

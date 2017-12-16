@@ -821,7 +821,7 @@ public class Eyes extends EyesBase {
         FrameChain originalFC = new FrameChain(logger, getEyesDriver().getFrameChain());
         EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
 
-        EyesRemoteWebElement eyesRemoteWebElement = new EyesRemoteWebElement(logger, getEyesDriver(), element);
+        EyesRemoteWebElement eyesRemoteWebElement = getEyesDriver().getEyesElement(element);
         Region elementBounds = eyesRemoteWebElement.getBounds();
 
         Location currentFrameOffset = originalFC.getCurrentFrameOffset();
@@ -1677,8 +1677,7 @@ public class Eyes extends EyesBase {
     private void checkElement(WebElement element, String name, ICheckSettings checkSettings) {
 
         // Since the element might already have been found using EyesWebDriver.
-        final EyesRemoteWebElement eyesElement = (element instanceof EyesRemoteWebElement) ?
-                (EyesRemoteWebElement) element : new EyesRemoteWebElement(logger, driver, element);
+        final EyesRemoteWebElement eyesElement = driver.getEyesElement(element);
 
         this.regionToCheck = null;
 

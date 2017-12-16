@@ -41,7 +41,7 @@ public class EyesKeyboard implements Keyboard {
         WebElement activeElement = eyesDriver.switchTo().activeElement();
 
         if (activeElement instanceof RemoteWebElement) {
-            activeElement = new EyesRemoteWebElement(logger, eyesDriver, activeElement);
+            activeElement = eyesDriver.getEyesElement(activeElement);
 
             control = ((EyesRemoteWebElement)activeElement).getBounds();
         }

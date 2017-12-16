@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EyesRemoteWebElement extends RemoteWebElement {
-    private final Logger logger;
-    private final EyesWebDriver eyesDriver;
-    private final RemoteWebElement webElement;
+    protected final Logger logger;
+    protected final EyesWebDriver eyesDriver;
+    protected final RemoteWebElement webElement;
     private Method executeMethod;
 
     private final String JS_GET_COMPUTED_STYLE_FORMATTED_STR =
@@ -329,8 +329,7 @@ public class EyesRemoteWebElement extends RemoteWebElement {
     private WebElement wrapElement(WebElement elementToWrap) {
         WebElement resultElement = elementToWrap;
         if (elementToWrap instanceof RemoteWebElement) {
-            resultElement = new EyesRemoteWebElement(logger, eyesDriver,
-                    (RemoteWebElement) elementToWrap);
+            resultElement = eyesDriver.getEyesElement(elementToWrap);
         }
         return resultElement;
     }
@@ -348,8 +347,7 @@ public class EyesRemoteWebElement extends RemoteWebElement {
 
         for (WebElement currentElement : elementsToWrap) {
             if (currentElement instanceof RemoteWebElement) {
-                wrappedElementsList.add(new EyesRemoteWebElement(logger,
-                        eyesDriver, (RemoteWebElement) currentElement));
+                wrappedElementsList.add(eyesDriver.getEyesElement(currentElement));
             } else {
                 wrappedElementsList.add(currentElement);
             }

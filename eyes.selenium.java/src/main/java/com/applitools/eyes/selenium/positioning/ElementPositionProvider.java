@@ -18,8 +18,7 @@ public class ElementPositionProvider implements PositionProvider {
         ArgumentGuard.notNull(element, "element");
 
         this.logger = logger;
-        this.element = (element instanceof  EyesRemoteWebElement) ?
-                (EyesRemoteWebElement)element : new EyesRemoteWebElement(logger, driver, element);
+        this.element = driver.getEyesElement(element);
 
         logger.verbose("creating ElementPositionProvider");
     }

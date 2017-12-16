@@ -109,6 +109,13 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
     public void setRemoteWebDriver(RemoteWebDriver driver) { this.driver = driver; }
 
+    public EyesRemoteWebElement getEyesElement (WebElement element) {
+        if (element instanceof EyesRemoteWebElement) {
+            return (EyesRemoteWebElement) element;
+        }
+        return new EyesRemoteWebElement(logger, this, element);
+    }
+
     public TouchScreen getTouch() {
         return touch;
     }
@@ -151,8 +158,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
 
         for (WebElement currentElement : foundWebElementsList) {
             if (currentElement instanceof RemoteWebElement) {
-                resultElementsList.add(new EyesRemoteWebElement(logger, this,
-                        (RemoteWebElement) currentElement));
+                resultElementsList.add(getEyesElement(currentElement));
 
                 // For Remote web elements, we can keep the IDs
                 elementsIds.put(((RemoteWebElement) currentElement).getId(),
@@ -171,7 +177,7 @@ public class EyesWebDriver implements HasCapabilities, HasInputDevices,
     public WebElement findElement(By by) {
         WebElement webElement = getRemoteWebDriver().findElement(by);
         if (webElement instanceof RemoteWebElement) {
-            webElement = new EyesRemoteWebElement(logger, this, webElement);
+            webElement = getEyesElement(webElement);
 
             // For Remote web elements, we can keep the IDs,
             // for Id based lookup (mainly used for Javascript related
