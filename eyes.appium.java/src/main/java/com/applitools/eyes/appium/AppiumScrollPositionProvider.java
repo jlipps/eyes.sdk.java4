@@ -20,6 +20,7 @@ public class AppiumScrollPositionProvider implements ScrollingPositionProvider {
   protected final Logger logger;
   protected final AppiumDriver driver;
   protected final EyesAppiumDriver eyesDriver;
+  private WebElement firstVisibleChild;
 
   public AppiumScrollPositionProvider (Logger logger, EyesAppiumDriver driver) {
     ArgumentGuard.notNull(logger, "logger");
@@ -42,6 +43,14 @@ public class AppiumScrollPositionProvider implements ScrollingPositionProvider {
       }
   }
 
+  private WebElement getCachedFirstVisibleChild () {
+      WebElement activeScroll = getActiveScrollView();
+      if (firstVisibleChild == null) {
+          firstVisibleChild = activeScroll.findElement(By.xpath("/*[@firstVisible='true']"));
+      }
+      return firstVisibleChild;
+  }
+
   /**
    * @return The scroll position of the current frame.
    */
@@ -53,10 +62,8 @@ public class AppiumScrollPositionProvider implements ScrollingPositionProvider {
     } catch (NoSuchElementException e) {
         return new Location(0, 0);
     }
-    // TODO cache first visible child
-    WebElement firstVisChild = activeScroll.findElement(By.xpath("/*[@firstVisible='true']"));
     Point loc = activeScroll.getLocation();
-    Point childLoc = firstVisChild.getLocation();
+    Point childLoc = getCachedFirstVisibleChild().getLocation();
     // the position of the scrollview is basically the offset of the first visible child
     return new Location(childLoc.x - loc.x, childLoc.y - loc.y);
   }
