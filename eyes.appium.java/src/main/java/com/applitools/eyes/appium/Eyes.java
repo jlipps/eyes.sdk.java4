@@ -26,6 +26,7 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     private static final String NATIVE_APP = "NATIVE_APP";
     protected EyesAppiumDriver driver;
+    protected AppiumScrollPositionProvider positionProvider; // hiding EyesBase.positionProvider, because Appium _only_ has a scroll position provider
 
     public Eyes() {
         init();
@@ -52,8 +53,11 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         }
     }
 
+    @Override
+    public AppiumScrollPositionProvider getPositionProvider() { return positionProvider; }
+
     protected ScaleProviderFactory getScaleProviderFactory() {
-        return new ContextBasedScaleProviderFactory(logger, positionProvider.getEntireSize(),
+        return new ContextBasedScaleProviderFactory(logger, getPositionProvider().getEntireSize(),
                 viewportSizeHandler.get(), getDevicePixelRatio(), EyesAppiumUtils.isMobileDevice(getDriver()),
                 scaleProviderHandler);
     }
@@ -128,7 +132,7 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         BufferedImage fullPageImage =
             algo.getStitchedRegion(imageProvider, Region.EMPTY,
                 getScrollPositionProvider(),
-                positionProvider, scaleProviderFactory,
+                getPositionProvider(), scaleProviderFactory,
                 cutProviderHandler.get(),
                 getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
                 getStitchOverlap(), regionPositionCompensation, scrollProvider);

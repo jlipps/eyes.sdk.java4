@@ -998,7 +998,7 @@ public class Eyes extends EyesBase {
         // If needed, scroll to the top/left of the element (additional help
         // to make sure it's visible).
         Point locationAsPoint = element.getLocation();
-        regionVisibilityStrategy.moveToRegion(positionProvider,
+        regionVisibilityStrategy.moveToRegion(getPositionProvider(),
                 new Location(locationAsPoint.getX(), locationAsPoint.getY()));
 
         super.checkWindowBase(
@@ -1015,7 +1015,7 @@ public class Eyes extends EyesBase {
                 matchTimeout
         );
         logger.verbose("Done! trying to scroll back to original position..");
-        regionVisibilityStrategy.returnToOriginalPosition(positionProvider);
+        regionVisibilityStrategy.returnToOriginalPosition(getPositionProvider());
         logger.verbose("Done!");
     }
 
@@ -1392,7 +1392,7 @@ public class Eyes extends EyesBase {
     }
 
     private ScaleProviderFactory getScaleProviderFactory() {
-        return new ContextBasedScaleProviderFactory(logger, positionProvider.getEntireSize(),
+        return new ContextBasedScaleProviderFactory(logger, getPositionProvider().getEntireSize(),
                 viewportSizeHandler.get(), devicePixelRatio, false,
                 scaleProviderHandler);
     }
@@ -1703,7 +1703,7 @@ public class Eyes extends EyesBase {
 
         this.regionToCheck = null;
 
-        PositionProvider originalPositionProvider = positionProvider;
+        PositionProvider originalPositionProvider = getPositionProvider();
         PositionProvider scrollPositionProvider = getScrollPositionProvider();
         Location originalScrollPosition = scrollPositionProvider.getCurrentPosition();
 
@@ -2060,7 +2060,7 @@ public class Eyes extends EyesBase {
 
             BufferedImage entireFrameOrElement =
                     algo.getStitchedRegion(imageProvider, regionToCheck,
-                            positionProvider, getElementPositionProvider(), // TODO generalize getElementPositionProvider for appium
+                            getPositionProvider(), getElementPositionProvider(), // TODO generalize getElementPositionProvider for appium
                             scaleProviderFactory,
                             cutProviderHandler.get(),
                             getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
@@ -2114,7 +2114,7 @@ public class Eyes extends EyesBase {
         BufferedImage fullPageImage =
             algo.getStitchedRegion(imageProvider, Region.EMPTY,
                 getScrollPositionProvider(),
-                positionProvider, scaleProviderFactory,
+                getPositionProvider(), scaleProviderFactory,
                 cutProviderHandler.get(),
                 getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
                 getStitchOverlap(), regionPositionCompensation, scrollProvider);
@@ -2151,7 +2151,7 @@ public class Eyes extends EyesBase {
      * @return The currently set position provider.
      */
     public PositionProvider getElementPositionProvider() {
-        return elementPositionProvider == null ? positionProvider : elementPositionProvider;
+        return elementPositionProvider == null ? getPositionProvider() : elementPositionProvider;
     }
 
 }
