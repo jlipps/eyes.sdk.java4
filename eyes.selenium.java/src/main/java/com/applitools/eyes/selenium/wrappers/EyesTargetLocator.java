@@ -149,7 +149,7 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
      */
     public WebDriver framesDoScroll(FrameChain frameChain) {
         logger.verbose("EyesWebTargetLocator.framesDoScroll(frameChain)");
-        switchToDefault();
+        getDriver().switchTo().defaultContent();
         for (Frame frame : frameChain) {
             logger.verbose("Scrolling by parent scroll position...");
             Location frameLocation = frame.getLocation();
@@ -161,7 +161,7 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
                 spp.setPosition(frameLocation);
             }
             logger.verbose("Done! Switching to frame...");
-            switchToFrame(frame.getReference());
+            getDriver().switchTo().frame(frame.getReference());
             logger.verbose("Done!");
         }
 
@@ -177,9 +177,9 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
      */
     public WebDriver frames(FrameChain frameChain) {
         logger.verbose("EyesWebTargetLocator.frames(frameChain)");
-        switchToDefault();
+        getDriver().switchTo().defaultContent();
         for (Frame frame : frameChain) {
-            switchToFrame(frame.getReference());
+            getDriver().switchTo().frame(frame.getReference());
         }
         logger.verbose("Done switching into nested frames!");
         return getDriver();
@@ -197,7 +197,7 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
         logger.verbose("EyesWebTargetLocator.frames(framesPath)");
         for (String frameNameOrId : framesPath) {
             logger.verbose("Switching to frame...");
-            switchToFrame(frameNameOrId);
+            getDriver().switchTo().frame(frameNameOrId);
             logger.verbose("Done!");
         }
         logger.verbose("Done switching into nested frames!");
