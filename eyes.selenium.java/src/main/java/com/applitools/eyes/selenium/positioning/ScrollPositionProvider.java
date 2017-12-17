@@ -6,10 +6,13 @@ import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
+import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.utils.ArgumentGuard;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.WebElement;
 
-public class ScrollPositionProvider implements ScrollingPositionProvider {
+public class ScrollPositionProvider implements SeleniumScrollingPositionProvider {
 
 
     protected final Logger logger;
@@ -48,6 +51,15 @@ public class ScrollPositionProvider implements ScrollingPositionProvider {
         logger.verbose("ScrollPositionProvider - Scrolling to " + location);
         EyesSeleniumUtils.setCurrentScrollPosition(executor, location);
         logger.verbose("ScrollPositionProvider - Done scrolling!");
+    }
+
+    public void setPosition(WebElement element) {
+        Point loc = element.getLocation();
+        setPosition(new Location(loc.x, loc.y));
+    }
+
+    public void setPosition(Frame frame) {
+        setPosition(frame.getReference());
     }
 
     /**

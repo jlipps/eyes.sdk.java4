@@ -7,6 +7,7 @@ import com.applitools.eyes.RectangleSize;
 import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
+import com.applitools.eyes.selenium.positioning.SeleniumScrollingPositionProvider;
 import com.applitools.utils.ArgumentGuard;
 import java.util.List;
 import org.openqa.selenium.Alert;
@@ -152,7 +153,13 @@ public abstract class EyesTargetLocator implements WebDriver.TargetLocator {
         for (Frame frame : frameChain) {
             logger.verbose("Scrolling by parent scroll position...");
             Location frameLocation = frame.getLocation();
-            getScrollProvider().setPosition(frameLocation);
+            ScrollingPositionProvider spp = getScrollProvider();
+            if (spp instanceof SeleniumScrollingPositionProvider) {
+                // set position by the actual frame element if we can (to support appium)
+                ((SeleniumScrollingPositionProvider) spp).setPosition(frame);
+            } else {
+                spp.setPosition(frameLocation);
+            }
             logger.verbose("Done! Switching to frame...");
             switchToFrame(frame.getReference());
             logger.verbose("Done!");

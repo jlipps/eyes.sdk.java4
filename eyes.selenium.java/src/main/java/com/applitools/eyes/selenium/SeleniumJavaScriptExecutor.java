@@ -11,7 +11,6 @@ public class SeleniumJavaScriptExecutor implements IEyesJsExecutor {
         this.driver = driver;
     }
 
-    @Override
     public Object executeScript(String script, Object... args) {
         return this.driver.executeScript(script, args);
     }

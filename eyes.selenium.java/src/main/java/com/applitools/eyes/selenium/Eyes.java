@@ -48,6 +48,7 @@ import com.applitools.eyes.selenium.positioning.ImageRotation;
 import com.applitools.eyes.selenium.positioning.RegionPositionCompensation;
 import com.applitools.eyes.selenium.positioning.RegionPositionCompensationFactory;
 import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
+import com.applitools.eyes.selenium.positioning.SeleniumScrollingPositionProvider;
 import com.applitools.eyes.selenium.regionVisibility.MoveToRegionVisibilityStrategy;
 import com.applitools.eyes.selenium.regionVisibility.NopRegionVisibilityStrategy;
 import com.applitools.eyes.selenium.regionVisibility.RegionVisibilityStrategy;
@@ -800,13 +801,37 @@ public class Eyes extends EyesBase {
         checkFrameOrElement = false;
     }
 
+    private void setPositionByFrame(Frame frame) {
+        PositionProvider pp = getPositionProvider();
+        // if we know how to set the position by the frame element, do that (this will include appium)
+        if (pp instanceof SeleniumScrollingPositionProvider) {
+            ((SeleniumScrollingPositionProvider) pp).setPosition(frame);
+        } else {
+            // otherwise, set by the location
+            pp.setPosition(frame.getLocation());
+        }
+    }
+
+    private void setPositionByElement(WebElement element) {
+        PositionProvider pp = getPositionProvider();
+        // if we know how to set the position by the frame element, do that (this will include appium)
+        if (pp instanceof SeleniumScrollingPositionProvider) {
+            ((SeleniumScrollingPositionProvider) pp).setPosition(element);
+        } else {
+            // otherwise, set by the location
+            Point p = element.getLocation();
+            Location elementLocation = new Location(p.getX(), p.getY());
+            pp.setPosition(elementLocation);
+        }
+    }
+
     private FrameChain ensureFrameVisible() {
         FrameChain originalFC = new FrameChain(logger, getEyesDriver().getFrameChain());
         FrameChain fc = new FrameChain(logger, getEyesDriver().getFrameChain());
         while (fc.size() > 0) {
             getEyesDriver().getRemoteWebDriver().switchTo().parentFrame();
             Frame frame = fc.pop();
-            this.positionProvider.setPosition(frame.getLocation());
+            setPositionByFrame(frame);
         }
         ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
         return originalFC;
@@ -832,14 +857,11 @@ public class Eyes extends EyesBase {
         if (!viewportBounds.contains(elementBounds)) {
             ensureFrameVisible();
 
-            Point p = element.getLocation();
-            Location elementLocation = new Location(p.getX(), p.getY());
-
             if (originalFC.size() > 0 && !element.equals(originalFC.peek())) {
                 switchTo.frames(originalFC);
             }
 
-            this.positionProvider.setPosition(elementLocation);
+            setPositionByElement(element);
         }
     }
 
