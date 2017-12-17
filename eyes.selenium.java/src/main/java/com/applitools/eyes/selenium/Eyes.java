@@ -377,6 +377,11 @@ public class Eyes extends EyesBase {
         }
     }
 
+    @Override
+    public void setPositionProvider(PositionProvider positionProvider) {
+        this.positionProvider = positionProvider;
+    }
+
     /**
      * See {@link #open(WebDriver, String, String, RectangleSize)}.
      * {@code viewportSize} defaults to {@code null}.

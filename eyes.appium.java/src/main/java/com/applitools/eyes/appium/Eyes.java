@@ -8,6 +8,7 @@ import com.applitools.eyes.Location;
 import com.applitools.eyes.Region;
 import com.applitools.eyes.ScaleProviderFactory;
 import com.applitools.eyes.capture.EyesScreenshotFactory;
+import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.ContextBasedScaleProviderFactory;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
@@ -55,6 +56,12 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     @Override
     public AppiumScrollPositionProvider getPositionProvider() { return positionProvider; }
+
+    @Override
+    public void setPositionProvider(PositionProvider positionProvider) {
+        logger.verbose("Setting Appium position provider");
+        this.positionProvider = (AppiumScrollPositionProvider) positionProvider;
+    }
 
     protected ScaleProviderFactory getScaleProviderFactory() {
         return new ContextBasedScaleProviderFactory(logger, getPositionProvider().getEntireSize(),

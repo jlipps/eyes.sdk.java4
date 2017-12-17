@@ -25,6 +25,7 @@ import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import java.awt.image.BufferedImage;
 import java.util.Iterator;
+import javafx.geometry.Pos;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
@@ -47,9 +48,8 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     // The part of the frame window which is visible in the screenshot
     private Region frameWindow;
 
-    private static Location getDefaultContentScrollPosition(Logger logger, FrameChain currentFrames, EyesWebDriver driver) {
-        IEyesJsExecutor jsExecutor = new SeleniumJavaScriptExecutor(driver);
-        PositionProvider positionProvider = new ScrollPositionProvider(logger, jsExecutor);
+    private static Location getDefaultContentScrollPosition(Logger logger, FrameChain currentFrames,
+            EyesWebDriver driver, PositionProvider positionProvider) {
         if (currentFrames.size() == 0) {
             return positionProvider.getCurrentPosition();
         }
@@ -65,9 +65,10 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     }
 
     public static Location calcFrameLocationInScreenshot(Logger logger, EyesWebDriver driver,
-                                                         FrameChain frameChain, ScreenshotType screenshotType) {
+                                                         FrameChain frameChain, PositionProvider positionProvider,
+                                                         ScreenshotType screenshotType) {
 
-        Location windowScroll = getDefaultContentScrollPosition(logger, frameChain, driver);
+        Location windowScroll = getDefaultContentScrollPosition(logger, frameChain, driver, positionProvider);
 
         logger.verbose("Getting first frame...");
         Iterator<Frame> frameIterator = frameChain.iterator();
@@ -121,7 +122,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         frameChain = driver.getFrameChain();
         RectangleSize frameSize = getFrameSize(positionProvider);
         currentFrameScrollPosition = getUpdatedScrollPosition(positionProvider);
-        frameLocationInScreenshot = getUpdatedFrameLocationInScreenshot(logger, frameLocationInScreenshot);
+        frameLocationInScreenshot = getUpdatedFrameLocationInScreenshot(logger, frameLocationInScreenshot, positionProvider);
 
         this.frameLocationInScreenshot = frameLocationInScreenshot;
 
@@ -135,10 +136,10 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
         logger.verbose("Done!");
     }
 
-    private Location getUpdatedFrameLocationInScreenshot(Logger logger, Location frameLocationInScreenshot) {
+    private Location getUpdatedFrameLocationInScreenshot(Logger logger, Location frameLocationInScreenshot, PositionProvider positionProvider) {
         logger.verbose(String.format("frameLocationInScreenshot: %s", frameLocationInScreenshot));
         if (frameChain.size() > 0) {
-            frameLocationInScreenshot = calcFrameLocationInScreenshot(logger, this.driver, frameChain, this.screenshotType);
+            frameLocationInScreenshot = calcFrameLocationInScreenshot(logger, this.driver, frameChain, positionProvider, this.screenshotType);
         } else if (frameLocationInScreenshot == null) {
             frameLocationInScreenshot = new Location(0, 0);
         }
