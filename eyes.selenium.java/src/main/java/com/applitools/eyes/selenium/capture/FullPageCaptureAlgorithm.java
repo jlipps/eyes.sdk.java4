@@ -127,16 +127,7 @@ public class FullPageCaptureAlgorithm {
         RectangleSize entireSize;
         if (!checkingAnElement) {
             try {
-                // TODO factor this out since with Appium we can simply retrieve the content size of a scrollable area and not have to calculate this here
-                Location originalCurrentPosition = scrollProvider.getCurrentPosition();
-                scrollProvider.scrollToBottomRight();
-                Location localCurrentPosition = scrollProvider.getCurrentPosition();
-                entireSize = new RectangleSize(
-                        localCurrentPosition.getX() + image.getWidth(),
-                        localCurrentPosition.getY() + image.getHeight());
-
-                scrollProvider.setPosition(originalCurrentPosition);
-
+                entireSize = scrollProvider.getEntireSize();
                 logger.verbose("Entire size of region context: " + entireSize);
             } catch (EyesDriverOperationException e) {
                 logger.log("WARNING: Failed to extract entire size of region context" + e.getMessage());

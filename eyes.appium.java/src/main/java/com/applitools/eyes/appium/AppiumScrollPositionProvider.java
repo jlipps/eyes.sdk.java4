@@ -25,6 +25,11 @@ import org.openqa.selenium.json.Json;
 
 public class AppiumScrollPositionProvider implements SeleniumScrollingPositionProvider {
 
+    private static final String SCROLL_DIRECTION_UP = "up";
+    private static final String SCROLL_DIRECTION_DOWN = "down";
+    private static final String SCROLL_DIRECTION_LEFT = "left";
+    private static final String SCROLL_DIRECTION_RIGHT = "right";
+
     protected final Logger logger;
     protected final AppiumDriver driver;
     protected final EyesAppiumDriver eyesDriver;
@@ -73,7 +78,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         Point loc = activeScroll.getLocation();
         Point childLoc = getCachedFirstVisibleChild().getLocation();
         // the position of the scrollview is basically the offset of the first visible child
-        return new Location(childLoc.x - loc.x, childLoc.y - loc.y);
+        return new Location(loc.x - childLoc.x, loc.y - childLoc.y);
     }
 
     /**
@@ -81,7 +86,62 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
      * @param location The position to scroll to.
      */
     public void setPosition(Location location) {
-        logger.log("Warning: Appium cannot reliably scroll based on location; pass an element instead");
+        logger.log("Warning: Appium cannot reliably scroll based on location; pass an element instead if you can");
+        Location curPos = getCurrentPosition();
+        logger.verbose("Wanting to scroll to " + location);
+        logger.verbose("Current scroll position is " + getCurrentPosition());
+        Location lastPos = null;
+
+
+        HashMap<String, String> args = new HashMap<>();
+        String directionY = ""; // empty means we don't have to do any scrolling
+        String directionX = "";
+        if (curPos.getY() < location.getY()) {
+            directionY = SCROLL_DIRECTION_DOWN;
+        } else if (curPos.getY() > location.getY()) {
+            directionY = SCROLL_DIRECTION_UP;
+        }
+        if (curPos.getX() < location.getX()) {
+            directionX = SCROLL_DIRECTION_RIGHT;
+        } else if (curPos.getX() > location.getX()) {
+            directionX = SCROLL_DIRECTION_LEFT;
+        }
+
+
+        // first handle any vertical scrolling
+        if (directionY != "") {
+            logger.verbose("Scrolling to Y component");
+            args.put("direction", directionY);
+            while ((directionY == SCROLL_DIRECTION_DOWN && curPos.getY() < location.getY()) ||
+                (directionY == SCROLL_DIRECTION_UP && curPos.getY() > location.getY())) {
+                logger.verbose("Scrolling " + directionY);
+                driver.executeScript("mobile: scroll", args);
+                lastPos = curPos;
+                curPos = getCurrentPosition();
+                logger.verbose("Scrolled to " + curPos);
+                if (curPos.getY() == lastPos.getY()) {
+                    logger.verbose("Ended up at the same place as last scroll, stopping");
+                    break;
+                }
+            }
+        }
+
+        // then handle any horizontal scrolling
+        if (directionX != "") {
+            logger.verbose("Scrolling to X component");
+            args.put("direction", directionX);
+            while ((directionX == SCROLL_DIRECTION_RIGHT && curPos.getX() < location.getX()) ||
+                (directionX == SCROLL_DIRECTION_LEFT && curPos.getX() > location.getX())) {
+                logger.verbose("Scrolling " + directionY);
+                driver.executeScript("mobile: scroll", args);
+                lastPos = curPos;
+                curPos = getCurrentPosition();
+                if (curPos.getX() == lastPos.getX()) {
+                    logger.verbose("Ended up at the same place as last scroll, stopping");
+                    break;
+                }
+            }
+        }
     }
 
     public void setPosition(WebElement element) {
