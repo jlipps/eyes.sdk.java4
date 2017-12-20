@@ -10,10 +10,13 @@ import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.positioning.ScrollPositionMemento;
 import com.applitools.eyes.selenium.positioning.SeleniumScrollingPositionProvider;
 import com.applitools.utils.ArgumentGuard;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.MobileBy;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import javax.swing.text.AbstractDocument.Content;
 import jdk.nashorn.internal.objects.Global;
 import jdk.nashorn.internal.parser.JSONParser;
 import jdk.nashorn.internal.runtime.Context;
@@ -34,6 +37,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     protected final AppiumDriver driver;
     protected final EyesAppiumDriver eyesDriver;
     private WebElement firstVisibleChild;
+    private ObjectMapper objectMapper;
 
     public AppiumScrollPositionProvider (Logger logger, EyesAppiumDriver driver) {
         ArgumentGuard.notNull(logger, "logger");
@@ -42,6 +46,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         this.logger = logger;
         this.driver = driver.getRemoteWebDriver();
         this.eyesDriver = driver;
+        objectMapper = new ObjectMapper();
     }
 
     private WebElement getActiveScrollView () {
@@ -162,15 +167,15 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
      */
     public RectangleSize getEntireSize() {
         WebElement activeScroll = getActiveScrollView();
-        String contentSizeList = activeScroll.getAttribute("contentSize");
-        // a string that looks something like width=10,height=20,top=0,left=0,scrollableOffset=1000
-        String[] attrs = contentSizeList.split(",");
-        HashMap<String, Integer> contentSize = new HashMap<>();
-        for (String attr : attrs) {
-            String[] keyVal = attr.split("=");
-            contentSize.put(keyVal[0], new Integer(keyVal[1]));
+        String contentSizeJson = activeScroll.getAttribute("contentSize");
+        ContentSize contentSize;
+        try {
+            contentSize = objectMapper.readValue(contentSizeJson, ContentSize.class);
+        } catch (IOException e) {
+            logger.verbose("WARNING: could not parse contentSize JSON: " + e);
+            return new RectangleSize(0, 0);
         }
-        RectangleSize result = new RectangleSize(contentSize.get("width"), contentSize.get("scrollableOffset"));
+        RectangleSize result = new RectangleSize(contentSize.width, contentSize.scrollableOffset);
         logger.verbose("AppiumScrollPositionProvider - Entire size: " + result);
         return result;
     }
