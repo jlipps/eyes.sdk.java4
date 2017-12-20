@@ -35,6 +35,8 @@ public class AppiumIOSFullPageScreenshotTest {
     LogHandler logHandler = new StdoutLogHandler(true);
     eyes.setLogHandler(logHandler);
     eyes.setForceFullPageScreenshot(true);
+    eyes.setSaveDebugScreenshots(true);
+    eyes.setDebugScreenshotsPath("/Users/jlipps/Desktop");
 
     try {
 

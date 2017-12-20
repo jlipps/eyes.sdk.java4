@@ -2053,9 +2053,11 @@ public class Eyes extends EyesBase {
         EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
 
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
-        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger,
+            getPositionProvider(), getElementPositionProvider(), getScrollPositionProvider(),
+            imageProvider, debugScreenshotsProvider, scaleProviderFactory, cutProviderHandler.get(),
+            screenshotFactory, getWaitBeforeScreenshots());
         EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
-        ScrollingPositionProvider scrollProvider = getScrollPositionProvider();
 
         if (checkFrameOrElement) {
             // TODO factor this out into its own method which can be overridden by Appium
@@ -2064,18 +2066,13 @@ public class Eyes extends EyesBase {
             switchTo.framesDoScroll(originalFrameChain);
 
             BufferedImage entireFrameOrElement =
-                    algo.getStitchedRegion(imageProvider, regionToCheck,
-                            getPositionProvider(), getElementPositionProvider(), // TODO generalize getElementPositionProvider for appium
-                            scaleProviderFactory,
-                            cutProviderHandler.get(),
-                            getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                            getStitchOverlap(), regionPositionCompensation, scrollProvider);
+                    algo.getStitchedRegion(regionToCheck, getStitchOverlap(), regionPositionCompensation);
 
             logger.verbose("Building screenshot object...");
             result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
                     new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
         } else if (forceFullPageScreenshot || stitchContent) {
-            result = getFullPageScreenshot(scaleProviderFactory, screenshotFactory, scrollProvider);
+            result = getFullPageScreenshot(scaleProviderFactory, screenshotFactory);
         } else {
             // TODO factor this out into its own method which can be overridden by Appium
             ensureElementVisible(this.targetElement);
@@ -2105,10 +2102,13 @@ public class Eyes extends EyesBase {
         return result;
     }
 
-    protected EyesWebDriverScreenshot getFullPageScreenshot (ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory, ScrollingPositionProvider scrollProvider) {
+    protected EyesWebDriverScreenshot getFullPageScreenshot (ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory) {
         logger.verbose("Full page screenshot requested.");
 
-        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger,
+            getScrollPositionProvider(), getPositionProvider(), getScrollPositionProvider(),
+            imageProvider, debugScreenshotsProvider, scaleProviderFactory, cutProviderHandler.get(),
+            screenshotFactory, getWaitBeforeScreenshots());
         EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
         FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
         // Save the current frame path.
@@ -2117,12 +2117,7 @@ public class Eyes extends EyesBase {
         switchTo.defaultContent();
 
         BufferedImage fullPageImage =
-            algo.getStitchedRegion(imageProvider, Region.EMPTY,
-                getScrollPositionProvider(),
-                getPositionProvider(), scaleProviderFactory,
-                cutProviderHandler.get(),
-                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                getStitchOverlap(), regionPositionCompensation, scrollProvider);
+            algo.getStitchedRegion(Region.EMPTY, getStitchOverlap(), regionPositionCompensation);
 
         switchTo.frames(originalFrameChain);
         return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);

@@ -38,7 +38,9 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         EyesSeleniumUtils.setJavascriptHandler(new AppiumJavascriptHandler(this.driver));
     }
 
-    protected EyesAppiumDriver getEyesDriver () { return this.driver; }
+    protected EyesAppiumDriver getEyesDriver() {
+        return this.driver;
+    }
 
     @Override
     protected void initDriver(WebDriver driver) {
@@ -55,7 +57,9 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     @Override
-    public AppiumScrollPositionProvider getPositionProvider() { return positionProvider; }
+    public AppiumScrollPositionProvider getPositionProvider() {
+        return positionProvider;
+    }
 
     @Override
     public void setPositionProvider(PositionProvider positionProvider) {
@@ -65,8 +69,9 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     protected ScaleProviderFactory getScaleProviderFactory() {
         return new ContextBasedScaleProviderFactory(logger, getPositionProvider().getEntireSize(),
-                viewportSizeHandler.get(), getDevicePixelRatio(), EyesAppiumUtils.isMobileDevice(getDriver()),
-                scaleProviderHandler);
+            viewportSizeHandler.get(), getDevicePixelRatio(),
+            EyesAppiumUtils.isMobileDevice(getDriver()),
+            scaleProviderHandler);
     }
 
     /**
@@ -100,7 +105,7 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
                     String platformVersion = EyesAppiumUtils.getPlatformVersion(underlyingDriver);
                     if (platformVersion != null) {
                         String majorVersion =
-                                platformVersion.split("\\.", 2)[0];
+                            platformVersion.split("\\.", 2)[0];
 
                         if (!majorVersion.isEmpty()) {
                             os += " " + majorVersion;
@@ -119,38 +124,33 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     @Override
-    protected void setDevicePixelRatio () {
+    protected void setDevicePixelRatio() {
         devicePixelRatio = getEyesDriver().getDevicePixelRatio();
     }
 
     @Override
-    protected ScrollingPositionProvider getScrollPositionProvider () {
+    protected ScrollingPositionProvider getScrollPositionProvider() {
         return new AppiumScrollPositionProvider(logger, getEyesDriver());
     }
 
     @Override
-    protected EyesWebDriverScreenshot getFullPageScreenshot (ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory, ScrollingPositionProvider scrollProvider) {
+    protected EyesWebDriverScreenshot getFullPageScreenshot(
+        ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory) {
+
         logger.verbose("Full page Appium screenshot requested.");
-        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger);
+        AppiumScrollPositionProvider scrollPositionProvider = (AppiumScrollPositionProvider) getScrollPositionProvider();
+        FullPageCaptureAlgorithm algo = new AppiumFullPageCaptureAlgorithm(logger,
+            scrollPositionProvider, imageProvider, debugScreenshotsProvider, scaleProviderFactory,
+            cutProviderHandler.get(), screenshotFactory, getWaitBeforeScreenshots());
 
         // TODO probably need to complicate this by looking at whether a scroll view is already scrolled
         Location originalFramePosition = new Location(0, 0);
 
-        BufferedImage fullPageImage =
-            algo.getStitchedRegion(imageProvider, Region.EMPTY,
-                getScrollPositionProvider(),
-                getPositionProvider(), scaleProviderFactory,
-                cutProviderHandler.get(),
-                getWaitBeforeScreenshots(), debugScreenshotsProvider, screenshotFactory,
-                getStitchOverlap(), regionPositionCompensation, scrollProvider);
+        BufferedImage fullPageImage = algo
+            .getStitchedRegion(Region.EMPTY, getStitchOverlap(), regionPositionCompensation);
 
-        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
-    }
-
-    @Override
-    public void beforeMatchWindow () {
-        super.beforeMatchWindow();
-        getEyesDriver().initScrollviewsAsFrames();
+        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null,
+            originalFramePosition);
     }
 
 }
