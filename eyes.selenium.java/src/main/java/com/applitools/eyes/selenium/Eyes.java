@@ -806,24 +806,13 @@ public class Eyes extends EyesBase {
         checkFrameOrElement = false;
     }
 
-    private void setPositionByFrame(Frame frame) {
-        PositionProvider pp = getPositionProvider();
-        // if we know how to set the position by the frame element, do that (this will include appium)
-        if (pp instanceof SeleniumScrollingPositionProvider) {
-            ((SeleniumScrollingPositionProvider) pp).setPosition(frame);
-        } else {
-            // otherwise, set by the location
-            pp.setPosition(frame.getLocation());
-        }
-    }
-
     private void setPositionByElement(WebElement element) {
         PositionProvider pp = getPositionProvider();
-        // if we know how to set the position by the frame element, do that (this will include appium)
+        // if we know how to set the position by the element, do that (this includes appium)
         if (pp instanceof SeleniumScrollingPositionProvider) {
             ((SeleniumScrollingPositionProvider) pp).setPosition(element);
         } else {
-            // otherwise, set by the location
+            // otherwise, set by the location (appium is not so good at this)
             Point p = element.getLocation();
             Location elementLocation = new Location(p.getX(), p.getY());
             pp.setPosition(elementLocation);
@@ -833,10 +822,11 @@ public class Eyes extends EyesBase {
     private FrameChain ensureFrameVisible() {
         FrameChain originalFC = new FrameChain(logger, getEyesDriver().getFrameChain());
         FrameChain fc = new FrameChain(logger, getEyesDriver().getFrameChain());
+        PositionProvider pp = getPositionProvider();
         while (fc.size() > 0) {
             getEyesDriver().getRemoteWebDriver().switchTo().parentFrame();
             Frame frame = fc.pop();
-            setPositionByFrame(frame);
+            pp.setPosition(frame.getLocation());
         }
         ((EyesTargetLocator) getEyesDriver().switchTo()).frames(originalFC);
         return originalFC;
