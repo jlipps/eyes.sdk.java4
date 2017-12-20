@@ -2038,62 +2038,23 @@ public class Eyes extends EyesBase {
         logger.verbose("getScreenshot()");
         EyesWebDriverScreenshot result;
 
-        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
-
-        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
-
-        FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
-        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger,
-            getPositionProvider(), getElementPositionProvider(), getScrollPositionProvider(),
-            imageProvider, debugScreenshotsProvider, scaleProviderFactory, cutProviderHandler.get(),
-            screenshotFactory, getWaitBeforeScreenshots());
-        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
-
         if (checkFrameOrElement) {
-            // TODO factor this out into its own method which can be overridden by Appium
-            logger.verbose("Check frame/element requested");
-
-            switchTo.framesDoScroll(originalFrameChain);
-
-            BufferedImage entireFrameOrElement =
-                    algo.getStitchedRegion(regionToCheck, getStitchOverlap(), regionPositionCompensation);
-
-            logger.verbose("Building screenshot object...");
-            result = new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
-                    new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
+            result = getFrameOrElementScreenshot();
         } else if (forceFullPageScreenshot || stitchContent) {
-            result = getFullPageScreenshot(scaleProviderFactory, screenshotFactory);
+            result = getFullPageScreenshot();
         } else {
-            // TODO factor this out into its own method which can be overridden by Appium
-            ensureElementVisible(this.targetElement);
+            result = getSimpleScreenshot();
 
-            logger.verbose("Screenshot requested...");
-            BufferedImage screenshotImage = imageProvider.getImage();
-            debugScreenshotsProvider.save(screenshotImage, "original");
-
-            ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
-            if (scaleProvider.getScaleRatio() != 1.0) {
-                logger.verbose("scaling...");
-                screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
-                debugScreenshotsProvider.save(screenshotImage, "scaled");
-            }
-
-            CutProvider cutProvider = cutProviderHandler.get();
-            if (!(cutProvider instanceof NullCutProvider)) {
-                logger.verbose("cutting...");
-                screenshotImage = cutProvider.cut(screenshotImage);
-                debugScreenshotsProvider.save(screenshotImage, "cut");
-            }
-
-            logger.verbose("Creating screenshot object...");
-            result = new EyesWebDriverScreenshot(logger, driver, screenshotImage);
         }
         logger.verbose("Done!");
         return result;
     }
 
-    protected EyesWebDriverScreenshot getFullPageScreenshot (ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory) {
+    protected EyesWebDriverScreenshot getFullPageScreenshot () {
         logger.verbose("Full page screenshot requested.");
+
+        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
+        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
         FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger,
             getScrollPositionProvider(), getPositionProvider(), getScrollPositionProvider(),
@@ -2111,6 +2072,55 @@ public class Eyes extends EyesBase {
 
         switchTo.frames(originalFrameChain);
         return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
+    }
+
+    protected EyesWebDriverScreenshot getFrameOrElementScreenshot() {
+        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
+        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
+
+        FrameChain originalFrameChain = new FrameChain(logger, getEyesDriver().getFrameChain());
+        FullPageCaptureAlgorithm algo = new FullPageCaptureAlgorithm(logger,
+            getPositionProvider(), getElementPositionProvider(), getScrollPositionProvider(),
+            imageProvider, debugScreenshotsProvider, scaleProviderFactory, cutProviderHandler.get(),
+            screenshotFactory, getWaitBeforeScreenshots());
+        EyesTargetLocator switchTo = (EyesTargetLocator) getEyesDriver().switchTo();
+
+        logger.verbose("Check frame/element requested");
+
+        switchTo.framesDoScroll(originalFrameChain);
+
+        BufferedImage entireFrameOrElement =
+            algo.getStitchedRegion(regionToCheck, getStitchOverlap(), regionPositionCompensation);
+
+        logger.verbose("Building screenshot object...");
+        return new EyesWebDriverScreenshot(logger, driver, entireFrameOrElement,
+            new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight()));
+    }
+
+    protected EyesWebDriverScreenshot getSimpleScreenshot() {
+        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
+        ensureElementVisible(this.targetElement);
+
+        logger.verbose("Screenshot requested...");
+        BufferedImage screenshotImage = imageProvider.getImage();
+        debugScreenshotsProvider.save(screenshotImage, "original");
+
+        ScaleProvider scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
+        if (scaleProvider.getScaleRatio() != 1.0) {
+            logger.verbose("scaling...");
+            screenshotImage = ImageUtils.scaleImage(screenshotImage, scaleProvider);
+            debugScreenshotsProvider.save(screenshotImage, "scaled");
+        }
+
+        CutProvider cutProvider = cutProviderHandler.get();
+        if (!(cutProvider instanceof NullCutProvider)) {
+            logger.verbose("cutting...");
+            screenshotImage = cutProvider.cut(screenshotImage);
+            debugScreenshotsProvider.save(screenshotImage, "cut");
+        }
+
+        logger.verbose("Creating screenshot object...");
+        return new EyesWebDriverScreenshot(logger, driver, screenshotImage);
     }
 
     @Override

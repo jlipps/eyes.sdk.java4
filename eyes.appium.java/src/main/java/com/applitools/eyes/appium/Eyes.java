@@ -13,6 +13,7 @@ import com.applitools.eyes.positioning.ScrollingPositionProvider;
 import com.applitools.eyes.selenium.ContextBasedScaleProviderFactory;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
+import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshotFactory;
 import com.applitools.eyes.selenium.capture.FullPageCaptureAlgorithm;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.MobileBy;
@@ -134,15 +135,18 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     }
 
     @Override
-    protected EyesWebDriverScreenshot getFullPageScreenshot(
-        ScaleProviderFactory scaleProviderFactory, EyesScreenshotFactory screenshotFactory) {
+    protected EyesWebDriverScreenshot getFullPageScreenshot() {
 
         logger.verbose("Full page Appium screenshot requested.");
+
+        EyesScreenshotFactory screenshotFactory = new EyesWebDriverScreenshotFactory(logger, getEyesDriver());
+        ScaleProviderFactory scaleProviderFactory = updateScalingParams();
+
         AppiumScrollPositionProvider scrollPositionProvider = (AppiumScrollPositionProvider) getScrollPositionProvider();
         FullPageCaptureAlgorithm algo = new AppiumFullPageCaptureAlgorithm(logger,
             scrollPositionProvider, imageProvider, debugScreenshotsProvider, scaleProviderFactory,
             cutProviderHandler.get(), screenshotFactory, getWaitBeforeScreenshots());
-        
+
         Location originalScrollViewPosition = scrollPositionProvider.getScrollableViewLocation();
 
         BufferedImage fullPageImage = algo
