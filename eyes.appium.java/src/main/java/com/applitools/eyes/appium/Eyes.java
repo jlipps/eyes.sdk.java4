@@ -142,15 +142,14 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         FullPageCaptureAlgorithm algo = new AppiumFullPageCaptureAlgorithm(logger,
             scrollPositionProvider, imageProvider, debugScreenshotsProvider, scaleProviderFactory,
             cutProviderHandler.get(), screenshotFactory, getWaitBeforeScreenshots());
-
-        // TODO probably need to complicate this by looking at whether a scroll view is already scrolled
-        Location originalFramePosition = new Location(0, 0);
+        
+        Location originalScrollViewPosition = scrollPositionProvider.getScrollableViewLocation();
 
         BufferedImage fullPageImage = algo
             .getStitchedRegion(Region.EMPTY, getStitchOverlap(), regionPositionCompensation);
 
         return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null,
-            originalFramePosition);
+            originalScrollViewPosition);
     }
 
 }

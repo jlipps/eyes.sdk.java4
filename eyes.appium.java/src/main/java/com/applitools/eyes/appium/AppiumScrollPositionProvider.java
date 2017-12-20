@@ -57,6 +57,17 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         return firstVisibleChild;
     }
 
+    public Location getScrollableViewLocation() {
+        WebElement activeScroll;
+        try {
+            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+            Point scrollLoc = activeScroll.getLocation();
+            return new Location(scrollLoc.x, scrollLoc.y);
+        } catch (NoSuchElementException e) {
+            return new Location(0, 0);
+        }
+    }
+
     /**
      * @return The scroll position of the current frame.
      */

@@ -75,8 +75,4 @@ public class EyesAppiumDriver extends EyesWebDriver {
 
         return defaultContentViewportSize;
     }
-
-    public List<WebElement> getScrollableViews () {
-        return driver.findElementsByXPath("//*[@scrollable='true']");
-    }
 }
