@@ -37,12 +37,6 @@ public class EyesAppiumDriver extends EyesWebDriver {
         return new EyesAppiumElement(logger, this, element);
     }
 
-    @Override
-    public TargetLocator switchTo() {
-        logger.verbose("Appium switchTo()");
-        return new EyesAppiumTargetLocator(logger, this, getRemoteWebDriver().switchTo());
-    }
-
     private Map<String, Object> getCachedSessionDetails () {
         if(sessionDetails == null) {
             logger.verbose("Retrieving session details and caching the result...");
@@ -85,15 +79,4 @@ public class EyesAppiumDriver extends EyesWebDriver {
     public List<WebElement> getScrollableViews () {
         return driver.findElementsByXPath("//*[@scrollable='true']");
     }
-
-
-    protected void initScrollviewsAsFrames() {
-        List<WebElement> views = getScrollableViews();
-        EyesAppiumTargetLocator switchTo = (EyesAppiumTargetLocator) switchTo();
-        for (WebElement view : views) {
-            // push the view onto the frame chain
-            switchTo.frame(view);
-        }
-    }
-
 }
