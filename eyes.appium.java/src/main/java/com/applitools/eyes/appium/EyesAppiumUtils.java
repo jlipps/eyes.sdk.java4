@@ -8,11 +8,16 @@ import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import io.appium.java_client.remote.MobileCapabilityType;
+import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.HasCapabilities;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 public class EyesAppiumUtils extends EyesSeleniumUtils{
+
+    private static String SCROLLVIEW_XPATH = "//*[@scrollable='true']";
+    private static String FIRST_VIS_XPATH = "/*[@firstVisible='true']";
 
     /**
      * @param driver The driver for which to check if it represents a mobile device.
@@ -56,6 +61,14 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
 
         return platformVersionObj == null ?
                 null : String.valueOf(platformVersionObj);
+    }
+
+    public static WebElement getFirstScrollableView(WebDriver driver) {
+        return driver.findElement(By.xpath(SCROLLVIEW_XPATH));
+    }
+
+    public static WebElement getFirstVisibleChild(WebElement element) {
+        return element.findElement(By.xpath(FIRST_VIS_XPATH));
     }
 
 

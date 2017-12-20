@@ -49,22 +49,10 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         objectMapper = new ObjectMapper();
     }
 
-    private WebElement getActiveScrollView () {
-        // the 'active' scroll view is either the one added to the chain most recently, or if the chain is empty, the first scroll view we find
-        if (eyesDriver.getFrameChain().size() > 0) {
-            return eyesDriver.getFrameChain().peek().getReference();
-        }
-        try {
-            return driver.findElementByXPath("//*[@scrollable='true']");
-        } catch (NoSuchElementException e) {
-            throw new NoSuchElementException("Tried to get the active scroll view but none was found");
-        }
-    }
-
     private WebElement getCachedFirstVisibleChild () {
-        WebElement activeScroll = getActiveScrollView();
+        WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
         if (firstVisibleChild == null) {
-            firstVisibleChild = activeScroll.findElement(By.xpath("/*[@firstVisible='true']"));
+            firstVisibleChild = EyesAppiumUtils.getFirstVisibleChild(activeScroll);
         }
         return firstVisibleChild;
     }
@@ -76,7 +64,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         logger.verbose("AppiumScrollPositionProvider - getCurrentPosition()");
         WebElement activeScroll;
         try {
-            activeScroll = getActiveScrollView();
+            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
         } catch (NoSuchElementException e) {
             return new Location(0, 0);
         }
@@ -166,7 +154,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
      * to.
      */
     public RectangleSize getEntireSize() {
-        WebElement activeScroll = getActiveScrollView();
+        WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
         String contentSizeJson = activeScroll.getAttribute("contentSize");
         ContentSize contentSize;
         try {
@@ -189,7 +177,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     }
 
     public void scrollToBottomRight() {
-        // EyesSeleniumUtils.scrollToBottomRight(this.executor);
+        setPosition(new Location(9999999, 9999999));
     }
 
 }
