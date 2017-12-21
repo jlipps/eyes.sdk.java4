@@ -1,6 +1,8 @@
 package com.applitools.eyes;
 
 import com.applitools.utils.ArgumentGuard;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Represents a 2D size.
@@ -14,7 +16,8 @@ public class RectangleSize {
      * @param width The width of the rectangle.
      * @param height The height of the rectangle.
      */
-    public RectangleSize(int width, int height) {
+    @JsonCreator
+    public RectangleSize(@JsonProperty("width") int width, @JsonProperty("height") int height) {
         ArgumentGuard.greaterThanOrEqualToZero(width, "width");
         ArgumentGuard.greaterThanOrEqualToZero(height, "height");
 

@@ -1,7 +1,15 @@
 package com.applitools.eyes;
 
 import com.applitools.utils.ArgumentGuard;
+import com.applitools.utils.Iso8610CalendarDeserializer;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.deser.std.DateDeserializers;
+
+import java.util.Calendar;
+import java.util.List;
 
 /**
  * Eyes test results.
@@ -20,6 +28,164 @@ public class TestResults {
     private String url;
     private boolean isNew;
     private TestResultsStatus status;
+    private String name;
+    private String secretToken;
+    private String id;
+    private String appName;
+    private String batchName;
+    private String batchId;
+    private String branchName;
+    private String hostOS;
+    private String hostApp;
+    private RectangleSize hostDisplaySize;
+    @JsonDeserialize(using = Iso8610CalendarDeserializer.class)
+    private Calendar startedAt;
+    private int duration;
+    private boolean isDifferent;
+    private boolean isAborted;
+    private SessionUrls appUrls;
+    private SessionUrls apiUrls;
+    private StepInfo[] stepsInfo;
+
+    public StepInfo[] getStepsInfo() {
+        return stepsInfo;
+    }
+
+    public void setStepsInfo(StepInfo[] stepsInfo) {
+        this.stepsInfo = stepsInfo;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSecretToken() {
+        return secretToken;
+    }
+
+    public void setSecretToken(String secretToken) {
+        this.secretToken = secretToken;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getBatchName() {
+        return batchName;
+    }
+
+    public void setBatchName(String batchName) {
+        this.batchName = batchName;
+    }
+
+    public String getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(String batchId) {
+        this.batchId = batchId;
+    }
+
+    public String getBranchName() {
+        return branchName;
+    }
+
+    public void setBranchName(String branchName) {
+        this.branchName = branchName;
+    }
+
+    public String getHostOS() {
+        return hostOS;
+    }
+
+    public void setHostOS(String hostOS) {
+        this.hostOS = hostOS;
+    }
+
+    public String getHostApp() {
+        return hostApp;
+    }
+
+    public void setHostApp(String hostApp) {
+        this.hostApp = hostApp;
+    }
+
+    public RectangleSize getHostDisplaySize() {
+        return hostDisplaySize;
+    }
+
+    public void setHostDisplaySize(RectangleSize hostDisplaySize) {
+        this.hostDisplaySize = hostDisplaySize;
+    }
+
+    public Calendar getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(Calendar startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
+    @JsonGetter("isDifferent")
+    public boolean isDifferent() {
+        return isDifferent;
+    }
+
+    @JsonSetter("isDifferent")
+    public void setDifferent(boolean different) {
+        isDifferent = different;
+    }
+
+    @JsonGetter("isAborted")
+    public boolean isAborted() {
+        return isAborted;
+    }
+
+    @JsonSetter("isAborted")
+    public void setAborted(boolean aborted) {
+        isAborted = aborted;
+    }
+
+    public SessionUrls getAppUrls() {
+        return appUrls;
+    }
+
+    public void setAppUrls(SessionUrls appUrls) {
+        this.appUrls = appUrls;
+    }
+
+    public SessionUrls getApiUrls() {
+        return apiUrls;
+    }
+
+    public void setApiUrls(SessionUrls apiUrls) {
+        this.apiUrls = apiUrls;
+    }
 
     /**
      * @return The total number of test steps.
@@ -104,6 +270,7 @@ public class TestResults {
     /**
      * @return Whether or not this is a new test.
      */
+    @JsonGetter("isNew")
     public boolean isNew() {
         return isNew;
     }
@@ -223,6 +390,7 @@ public class TestResults {
     /**
      * @param isNew Whether or not this test has an existing baseline.
      */
+    @JsonSetter("isNew")
     void setNew(boolean isNew) {
         this.isNew = isNew;
     }

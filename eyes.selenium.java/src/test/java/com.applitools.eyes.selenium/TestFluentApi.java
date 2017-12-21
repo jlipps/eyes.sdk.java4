@@ -1,6 +1,10 @@
 package com.applitools.eyes.selenium;
 
+import com.applitools.eyes.FloatingMatchSettings;
 import com.applitools.eyes.Region;
+import com.applitools.eyes.TestResults;
+import com.applitools.eyes.fluent.ICheckSettings;
+import com.applitools.eyes.selenium.fluent.SeleniumCheckSettings;
 import com.applitools.eyes.selenium.fluent.Target;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,6 +61,7 @@ public abstract class TestFluentApi extends TestSetup {
                 .fully());
     }
 
+    /*
     @Test
     public void TestCheckRegionInFrame2_Fluent() {
         eyes.check("Fluent - Inner frame div 1", Target.frame("frame1")
@@ -85,6 +90,7 @@ public abstract class TestFluentApi extends TestSetup {
                 .layout()
                 .floating(25, new Region(200, 200, 150, 150)));
     }
+    */
 
     @Test
     public void TestCheckFrameInFrame_Fully_Fluent2() {
@@ -104,22 +110,31 @@ public abstract class TestFluentApi extends TestSetup {
     }
 
     @Test
-    public void TestCheckWindowWithFloatingBySelector_Fluent()
-    {
-        eyes.check("Fluent - Window with floating region by selector", Target.window()
-                .floating(By.id("overflowing-div"), 3, 3, 20, 30));
+    public void TestCheckWindowWithFloatingBySelector_Fluent() {
+        SeleniumCheckSettings settings = Target.window()
+                .floating(By.id("overflowing-div"), 3, 3, 20, 30);
+        eyes.check("Fluent - Window with floating region by selector", settings);
+
+        setExpectedFloatingsRegions(new FloatingMatchSettings(8, 80, 304, 184, 3, 3, 20, 30));
     }
 
     @Test
-    public void TestCheckElementFully_Fluent()
-    {
+    public void TestCheckWindowWithFloatingByRegion_Fluent() {
+        ICheckSettings settings = Target.window()
+                .floating(new Region(10, 10, 20, 20), 3, 3, 20, 30);
+        eyes.check("Fluent - Window with floating region by region", settings);
+
+        setExpectedFloatingsRegions(new FloatingMatchSettings(10, 10, 20, 20, 3, 3, 20, 30));
+    }
+
+    @Test
+    public void TestCheckElementFully_Fluent() {
         WebElement element = webDriver.findElement(By.id("overflowing-div-image"));
         eyes.check("Fluent - Region by element - fully", Target.region(element).fully());
     }
 
     @Test
-    public void TestCheckElement_Fluent()
-    {
+    public void TestCheckElement_Fluent() {
         WebElement element = webDriver.findElement(By.id("overflowing-div-image"));
         eyes.check("Fluent - Region by element", Target.region(element));
     }

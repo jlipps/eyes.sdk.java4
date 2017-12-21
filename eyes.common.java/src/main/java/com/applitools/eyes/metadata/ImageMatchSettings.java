@@ -1,0 +1,162 @@
+
+package com.applitools.eyes.metadata;
+
+import java.util.List;
+
+import com.applitools.eyes.FloatingMatchSettings;
+import com.applitools.eyes.MatchLevel;
+import com.applitools.eyes.Region;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({
+    "matchLevel",
+    "ignore",
+    "strict",
+    "content",
+    "layout",
+    "floating",
+    "splitTopHeight",
+    "splitBottomHeight",
+    "ignoreCaret",
+    "scale",
+    "remainder"
+})
+public class ImageMatchSettings {
+
+    @JsonProperty("matchLevel")
+    private MatchLevel matchLevel;
+    @JsonProperty("ignore")
+    private List<Region> ignore = null;
+    @JsonProperty("strict")
+    private List<Region> strict = null;
+    @JsonProperty("content")
+    private List<Region> content = null;
+    @JsonProperty("layout")
+    private List<Region> layout = null;
+    @JsonProperty("floating")
+    private FloatingMatchSettings[] floating = null;
+    @JsonProperty("splitTopHeight")
+    private Integer splitTopHeight;
+    @JsonProperty("splitBottomHeight")
+    private Integer splitBottomHeight;
+    @JsonProperty("ignoreCaret")
+    private Boolean ignoreCaret;
+    @JsonProperty("scale")
+    private Integer scale;
+    @JsonProperty("remainder")
+    private Integer remainder;
+
+    @JsonProperty("matchLevel")
+    public MatchLevel getMatchLevel() {
+        return matchLevel;
+    }
+
+    @JsonProperty("matchLevel")
+    public void setMatchLevel(MatchLevel matchLevel) {
+        this.matchLevel = matchLevel;
+    }
+
+    @JsonProperty("ignore")
+    public List<Region> getIgnore() {
+        return ignore;
+    }
+
+    @JsonProperty("ignore")
+    public void setIgnore(List<Region> ignore) {
+        this.ignore = ignore;
+    }
+
+    @JsonProperty("strict")
+    public List<Region> getStrict() {
+        return strict;
+    }
+
+    @JsonProperty("strict")
+    public void setStrict(List<Region> strict) {
+        this.strict = strict;
+    }
+
+    @JsonProperty("content")
+    public List<Region> getContent() {
+        return content;
+    }
+
+    @JsonProperty("content")
+    public void setContent(List<Region> content) {
+        this.content = content;
+    }
+
+    @JsonProperty("layout")
+    public List<Region> getLayout() {
+        return layout;
+    }
+
+    @JsonProperty("layout")
+    public void setLayout(List<Region> layout) {
+        this.layout = layout;
+    }
+
+    @JsonProperty("floating")
+    public FloatingMatchSettings[] getFloating() {
+        return floating;
+    }
+
+    @JsonProperty("floating")
+    public void setFloating(FloatingMatchSettings[] floating) {
+        this.floating = floating;
+    }
+
+    @JsonProperty("splitTopHeight")
+    public Integer getSplitTopHeight() {
+        return splitTopHeight;
+    }
+
+    @JsonProperty("splitTopHeight")
+    public void setSplitTopHeight(Integer splitTopHeight) {
+        this.splitTopHeight = splitTopHeight;
+    }
+
+    @JsonProperty("splitBottomHeight")
+    public Integer getSplitBottomHeight() {
+        return splitBottomHeight;
+    }
+
+    @JsonProperty("splitBottomHeight")
+    public void setSplitBottomHeight(Integer splitBottomHeight) {
+        this.splitBottomHeight = splitBottomHeight;
+    }
+
+    @JsonProperty("ignoreCaret")
+    public Boolean getIgnoreCaret() {
+        return ignoreCaret;
+    }
+
+    @JsonProperty("ignoreCaret")
+    public void setIgnoreCaret(Boolean ignoreCaret) {
+        this.ignoreCaret = ignoreCaret;
+    }
+
+    @JsonProperty("scale")
+    public Integer getScale() {
+        return scale;
+    }
+
+    @JsonProperty("scale")
+    public void setScale(Integer scale) {
+        this.scale = scale;
+    }
+
+    @JsonProperty("remainder")
+    public Integer getRemainder() {
+        return remainder;
+    }
+
+    @JsonProperty("remainder")
+    public void setRemainder(Integer remainder) {
+        this.remainder = remainder;
+    }
+
+}
