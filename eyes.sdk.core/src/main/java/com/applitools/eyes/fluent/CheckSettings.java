@@ -44,13 +44,7 @@ public class CheckSettings implements ICheckSettings, ICheckSettingsInternal {
 
     protected void floating_(Region region, int maxUpOffset, int maxDownOffset, int maxLeftOffset, int maxRightOffset) {
         this.floatingRegions.add(
-                new FloatingRegionByRectangle(
-                        new Region(
-                                region.getLeft(),
-                                region.getTop(),
-                                region.getLeft() + region.getWidth(),
-                                region.getTop() + region.getHeight()
-                        ), maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset)
+                new FloatingRegionByRectangle(region, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset)
         );
     }
 

@@ -74,7 +74,8 @@ public class FrameChain implements Iterable<Frame>{
             frames.add(new Frame(logger, otherFrame.getReference(),
                     otherFrame.getLocation(),
                     otherFrame.getSize(), otherFrame.getInnerSize(),
-                    otherFrame.getOriginalLocation()));
+                    otherFrame.getOriginalLocation(),
+                    otherFrame.getOriginalOverflow()));
         }
         logger.verbose("Done!");
     }

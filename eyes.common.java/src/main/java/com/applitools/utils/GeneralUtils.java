@@ -9,6 +9,8 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * General purpose utilities.
@@ -16,8 +18,11 @@ import java.util.Locale;
 public class GeneralUtils {
 
     @SuppressWarnings("SpellCheckingInspection")
-    private static final String DATE_FORMAT_ISO8601 =
+    private static final String DATE_FORMAT_ISO8601_FOR_OUTPUT =
             "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
+    private static final String DATE_FORMAT_ISO8601_FOR_INPUT =
+            "yyyy-MM-dd'T'HH:mm:ssXXX";
 
     @SuppressWarnings("SpellCheckingInspection")
     private static final String DATE_FORMAT_RFC1123 =
@@ -57,7 +62,7 @@ public class GeneralUtils {
         ArgumentGuard.notNull(calendar, "calendar");
 
         SimpleDateFormat formatter =
-                new SimpleDateFormat(DATE_FORMAT_ISO8601, Locale.US);
+                new SimpleDateFormat(DATE_FORMAT_ISO8601_FOR_OUTPUT, Locale.US);
 
         // For the string to be formatted correctly you MUST also set
         // the time zone in the formatter! See:
@@ -101,10 +106,9 @@ public class GeneralUtils {
     public static Calendar fromISO8601DateTime(String dateTime)
             throws ParseException {
         ArgumentGuard.notNull(dateTime, "dateTime");
-
-        SimpleDateFormat formatter =
-                new SimpleDateFormat(DATE_FORMAT_ISO8601);
-
+        // Remove second fractions
+        dateTime = dateTime.replaceAll("\\.(\\d+)\\+", "+");
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_ISO8601_FOR_INPUT);
         Calendar cal = Calendar.getInstance();
         cal.setTime(formatter.parse(dateTime));
         return cal;

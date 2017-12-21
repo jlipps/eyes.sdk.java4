@@ -1,5 +1,7 @@
 package com.applitools.eyes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * The extent in which two images match (or are expected to match).
  */
@@ -32,5 +34,10 @@ public enum MatchLevel {
     /**
      * Images are identical.
      */
-    EXACT
+    EXACT;
+
+    @JsonCreator
+    public static MatchLevel fromString(String key) {
+        return key == null ? null : MatchLevel.valueOf(key.toUpperCase());
+    }
 }
