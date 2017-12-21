@@ -1,7 +1,4 @@
-
 package com.applitools.eyes.metadata;
-
-import java.util.List;
 
 import com.applitools.eyes.AppEnvironment;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -44,11 +41,11 @@ public class StartInfo {
     @JsonProperty("matchLevel")
     private String matchLevel;
     @JsonProperty("defaultMatchSettings")
-    private DefaultMatchSettings defaultMatchSettings;
+    private ImageMatchSettings defaultMatchSettings;
     @JsonProperty("agentId")
     private String agentId;
     @JsonProperty("properties")
-    private List<Object> properties = null;
+    private Object[] properties = null;
 
     @JsonProperty("sessionType")
     public String getSessionType() {
@@ -141,12 +138,12 @@ public class StartInfo {
     }
 
     @JsonProperty("defaultMatchSettings")
-    public DefaultMatchSettings getDefaultMatchSettings() {
+    public ImageMatchSettings getDefaultMatchSettings() {
         return defaultMatchSettings;
     }
 
     @JsonProperty("defaultMatchSettings")
-    public void setDefaultMatchSettings(DefaultMatchSettings defaultMatchSettings) {
+    public void setDefaultMatchSettings(ImageMatchSettings defaultMatchSettings) {
         this.defaultMatchSettings = defaultMatchSettings;
     }
 
@@ -161,12 +158,12 @@ public class StartInfo {
     }
 
     @JsonProperty("properties")
-    public List<Object> getProperties() {
+    public Object[] getProperties() {
         return properties;
     }
 
     @JsonProperty("properties")
-    public void setProperties(List<Object> properties) {
+    public void setProperties(Object[] properties) {
         this.properties = properties;
     }
 

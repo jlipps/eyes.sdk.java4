@@ -1,9 +1,13 @@
 package com.applitools.eyes.metadata;
 
+import java.util.Calendar;
 import java.util.List;
+
+import com.applitools.utils.Iso8610CalendarDeserializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -33,8 +37,11 @@ public class ActualAppOutput {
     private Boolean isMatching;
     @JsonProperty("areImagesMatching")
     private Boolean areImagesMatching;
+
     @JsonProperty("occurredAt")
-    private String occurredAt;
+    @JsonDeserialize(using = Iso8610CalendarDeserializer.class)
+    private Calendar occurredAt;
+
     @JsonProperty("userInputs")
     private List<Object> userInputs = null;
     @JsonProperty("windowTitle")
@@ -105,12 +112,12 @@ public class ActualAppOutput {
     }
 
     @JsonProperty("occurredAt")
-    public String getOccurredAt() {
+    public Calendar getOccurredAt() {
         return occurredAt;
     }
 
     @JsonProperty("occurredAt")
-    public void setOccurredAt(String occurredAt) {
+    public void setOccurredAt(Calendar occurredAt) {
         this.occurredAt = occurredAt;
     }
 

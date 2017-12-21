@@ -1,13 +1,9 @@
 
 package com.applitools.eyes.metadata;
 
-import java.util.List;
-
 import com.applitools.eyes.FloatingMatchSettings;
 import com.applitools.eyes.Region;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.*;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -15,95 +11,69 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "ignore",
     "strict",
     "content",
-    "layout",
-    "remarks",
-    "mismatching"
+    "layout"
 })
+@JsonIgnoreProperties({"remarks", "mismatching"})
 public class Annotations {
 
     @JsonProperty("floating")
-    private List<FloatingMatchSettings> floating = null;
+    private FloatingMatchSettings[] floating = null;
     @JsonProperty("ignore")
-    private List<Region> ignore = null;
+    private Region[] ignore = null;
     @JsonProperty("strict")
-    private List<Region> strict = null;
+    private Region[] strict = null;
     @JsonProperty("content")
-    private List<Region> content = null;
+    private Region[] content = null;
     @JsonProperty("layout")
-    private List<Region> layout = null;
-    @JsonProperty("remarks")
-    private List<Region> remarks = null;
-    @JsonProperty("mismatching")
-    private List<Region> mismatching = null;
+    private Region[] layout = null;
 
     @JsonProperty("floating")
-    public List<FloatingMatchSettings> getFloating() {
+    public FloatingMatchSettings[] getFloating() {
         return floating;
     }
 
     @JsonProperty("floating")
-    public void setFloating(List<FloatingMatchSettings> floating) {
+    public void setFloating(FloatingMatchSettings[] floating) {
         this.floating = floating;
     }
 
     @JsonProperty("ignore")
-    public List<Region> getIgnore() {
+    public Region[] getIgnore() {
         return ignore;
     }
 
     @JsonProperty("ignore")
-    public void setIgnore(List<Region> ignore) {
+    public void setIgnore(Region[] ignore) {
         this.ignore = ignore;
     }
 
     @JsonProperty("strict")
-    public List<Region> getStrict() {
+    public Region[] getStrict() {
         return strict;
     }
 
     @JsonProperty("strict")
-    public void setStrict(List<Region> strict) {
+    public void setStrict(Region[] strict) {
         this.strict = strict;
     }
 
     @JsonProperty("content")
-    public List<Region> getContent() {
+    public Region[] getContent() {
         return content;
     }
 
     @JsonProperty("content")
-    public void setContent(List<Region> content) {
+    public void setContent(Region[] content) {
         this.content = content;
     }
 
     @JsonProperty("layout")
-    public List<Region> getLayout() {
+    public Region[] getLayout() {
         return layout;
     }
 
     @JsonProperty("layout")
-    public void setLayout(List<Region> layout) {
+    public void setLayout(Region[] layout) {
         this.layout = layout;
     }
-
-    @JsonProperty("remarks")
-    public List<Region> getRemarks() {
-        return remarks;
-    }
-
-    @JsonProperty("remarks")
-    public void setRemarks(List<Region> remarks) {
-        this.remarks = remarks;
-    }
-
-    @JsonProperty("mismatching")
-    public List<Region> getMismatching() {
-        return mismatching;
-    }
-
-    @JsonProperty("mismatching")
-    public void setMismatching(List<Region> mismatching) {
-        this.mismatching = mismatching;
-    }
-
 }

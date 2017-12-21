@@ -1,7 +1,4 @@
-
 package com.applitools.eyes.metadata;
-
-import java.util.List;
 
 import com.applitools.eyes.FloatingMatchSettings;
 import com.applitools.eyes.MatchLevel;
@@ -29,13 +26,13 @@ public class ImageMatchSettings {
     @JsonProperty("matchLevel")
     private MatchLevel matchLevel;
     @JsonProperty("ignore")
-    private List<Region> ignore = null;
+    private Region[] ignore = null;
     @JsonProperty("strict")
-    private List<Region> strict = null;
+    private Region[] strict = null;
     @JsonProperty("content")
-    private List<Region> content = null;
+    private Region[] content = null;
     @JsonProperty("layout")
-    private List<Region> layout = null;
+    private Region[] layout = null;
     @JsonProperty("floating")
     private FloatingMatchSettings[] floating = null;
     @JsonProperty("splitTopHeight")
@@ -60,42 +57,42 @@ public class ImageMatchSettings {
     }
 
     @JsonProperty("ignore")
-    public List<Region> getIgnore() {
+    public Region[] getIgnore() {
         return ignore;
     }
 
     @JsonProperty("ignore")
-    public void setIgnore(List<Region> ignore) {
+    public void setIgnore(Region[] ignore) {
         this.ignore = ignore;
     }
 
     @JsonProperty("strict")
-    public List<Region> getStrict() {
+    public Region[] getStrict() {
         return strict;
     }
 
     @JsonProperty("strict")
-    public void setStrict(List<Region> strict) {
+    public void setStrict(Region[] strict) {
         this.strict = strict;
     }
 
     @JsonProperty("content")
-    public List<Region> getContent() {
+    public Region[] getContent() {
         return content;
     }
 
     @JsonProperty("content")
-    public void setContent(List<Region> content) {
+    public void setContent(Region[] content) {
         this.content = content;
     }
 
     @JsonProperty("layout")
-    public List<Region> getLayout() {
+    public Region[] getLayout() {
         return layout;
     }
 
     @JsonProperty("layout")
-    public void setLayout(List<Region> layout) {
+    public void setLayout(Region[] layout) {
         this.layout = layout;
     }
 

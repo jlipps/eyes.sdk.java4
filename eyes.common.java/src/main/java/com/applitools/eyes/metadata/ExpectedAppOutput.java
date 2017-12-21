@@ -1,9 +1,13 @@
 
 package com.applitools.eyes.metadata;
 
+import com.applitools.utils.Iso8610CalendarDeserializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.util.Calendar;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -21,8 +25,11 @@ public class ExpectedAppOutput {
     private Image image;
     @JsonProperty("thumbprint")
     private Image thumbprint;
+
     @JsonProperty("occurredAt")
-    private String occurredAt;
+    @JsonDeserialize(using = Iso8610CalendarDeserializer.class)
+    private Calendar occurredAt;
+
     @JsonProperty("annotations")
     private Annotations annotations;
 
@@ -57,12 +64,12 @@ public class ExpectedAppOutput {
     }
 
     @JsonProperty("occurredAt")
-    public String getOccurredAt() {
+    public Calendar getOccurredAt() {
         return occurredAt;
     }
 
     @JsonProperty("occurredAt")
-    public void setOccurredAt(String occurredAt) {
+    public void setOccurredAt(Calendar occurredAt) {
         this.occurredAt = occurredAt;
     }
 

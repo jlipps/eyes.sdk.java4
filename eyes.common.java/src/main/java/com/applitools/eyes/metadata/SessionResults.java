@@ -1,7 +1,4 @@
-
 package com.applitools.eyes.metadata;
-
-import java.util.List;
 
 import com.applitools.eyes.AppEnvironment;
 import com.fasterxml.jackson.annotation.JsonInclude;

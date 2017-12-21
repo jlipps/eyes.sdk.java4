@@ -1,9 +1,13 @@
 
 package com.applitools.eyes.metadata;
 
+import com.applitools.utils.Iso8610CalendarDeserializer;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.util.Calendar;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -17,8 +21,10 @@ public class BatchInfo {
     private String id;
     @JsonProperty("name")
     private String name;
+
     @JsonProperty("startedAt")
-    private String startedAt;
+    @JsonDeserialize(using = Iso8610CalendarDeserializer.class)
+    private Calendar startedAt;
 
     @JsonProperty("id")
     public String getId() {
@@ -41,12 +47,12 @@ public class BatchInfo {
     }
 
     @JsonProperty("startedAt")
-    public String getStartedAt() {
+    public Calendar getStartedAt() {
         return startedAt;
     }
 
     @JsonProperty("startedAt")
-    public void setStartedAt(String startedAt) {
+    public void setStartedAt(Calendar startedAt) {
         this.startedAt = startedAt;
     }
 
