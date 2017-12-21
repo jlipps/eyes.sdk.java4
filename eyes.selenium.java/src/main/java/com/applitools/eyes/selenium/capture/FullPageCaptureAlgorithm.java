@@ -29,13 +29,11 @@ public class FullPageCaptureAlgorithm {
     protected Logger logger;
 
     private final PositionProvider originProvider;
-    private final PositionProvider positionProvider;
-    private final ScrollingPositionProvider scrollProvider;
-    private final ImageProvider imageProvider;
-    private final DebugScreenshotsProvider debugScreenshotsProvider;
+    protected final ImageProvider imageProvider;
+    protected final DebugScreenshotsProvider debugScreenshotsProvider;
     private final ScaleProviderFactory scaleProviderFactory;
     private final EyesScreenshotFactory screenshotFactory;
-    private final int waitBeforeScreenshots;
+    protected final int waitBeforeScreenshots;
 
     private PositionMemento originalPosition;
     private ScaleProvider scaleProvider;
@@ -43,7 +41,10 @@ public class FullPageCaptureAlgorithm {
     private Region regionInScreenshot;
     private double pixelRatio;
     private BufferedImage stitchedImage;
-    private Location currentPosition;
+    protected Location currentPosition;
+
+    protected final PositionProvider positionProvider;
+    protected final ScrollingPositionProvider scrollProvider;
 
     public FullPageCaptureAlgorithm(Logger logger, PositionProvider originProvider,
         PositionProvider positionProvider,
@@ -166,7 +167,7 @@ public class FullPageCaptureAlgorithm {
         return entireSize;
     }
 
-    private BufferedImage cropPartToRegion(BufferedImage partImage, Region partRegion) {
+    protected BufferedImage cropPartToRegion(BufferedImage partImage, Region partRegion) {
 
         // FIXME - cropping should be overlaid (see previous comment re cropping)
         if (!(cutProvider instanceof NullCutProvider)) {
@@ -196,7 +197,7 @@ public class FullPageCaptureAlgorithm {
         return partImage;
     }
 
-    private void cleanupStitch(PositionMemento originalStitchedState,
+    protected void cleanupStitch(PositionMemento originalStitchedState,
         Location lastSuccessfulLocation,
         RectangleSize lastSuccessfulPartSize, RectangleSize entireSize) {
 
@@ -240,7 +241,10 @@ public class FullPageCaptureAlgorithm {
             "original-scrolled-" + positionProvider.getCurrentPosition().toStringForFilename());
 
         partImage = cropPartToRegion(partImage, partRegion);
+        stitchPartIntoContainer(partImage);
+    }
 
+    protected void stitchPartIntoContainer(BufferedImage partImage) {
         // Stitching the current part.
         logger.verbose("Stitching part into the image container...");
         stitchedImage.getRaster()

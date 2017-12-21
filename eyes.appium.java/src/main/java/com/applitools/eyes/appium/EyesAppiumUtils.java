@@ -8,6 +8,7 @@ import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import io.appium.java_client.remote.MobileCapabilityType;
+import java.util.HashMap;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.HasCapabilities;
@@ -69,6 +70,12 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
 
     public static WebElement getFirstVisibleChild(WebElement element) {
         return element.findElement(By.xpath(FIRST_VIS_XPATH));
+    }
+
+    public static void scrollByDirection(AppiumDriver driver, String direction) {
+        HashMap<String, String> args = new HashMap<>();
+        args.put("direction", direction);
+        driver.executeScript("mobile: scroll", args);
     }
 
 

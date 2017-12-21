@@ -6,7 +6,6 @@ package com.applitools.eyes.selenium.capture;
 import com.applitools.eyes.CoordinatesType;
 import com.applitools.eyes.EyesException;
 import com.applitools.eyes.EyesScreenshot;
-import com.applitools.eyes.IEyesJsExecutor;
 import com.applitools.eyes.Location;
 import com.applitools.eyes.Logger;
 import com.applitools.eyes.OutOfBoundsException;
@@ -14,18 +13,15 @@ import com.applitools.eyes.RectangleSize;
 import com.applitools.eyes.Region;
 import com.applitools.eyes.exceptions.CoordinatesTypeConversionException;
 import com.applitools.eyes.positioning.PositionProvider;
-import com.applitools.eyes.selenium.SeleniumJavaScriptExecutor;
 import com.applitools.eyes.selenium.exceptions.EyesDriverOperationException;
 import com.applitools.eyes.selenium.frames.Frame;
 import com.applitools.eyes.selenium.frames.FrameChain;
-import com.applitools.eyes.selenium.positioning.ScrollPositionProvider;
 import com.applitools.eyes.selenium.wrappers.EyesTargetLocator;
 import com.applitools.eyes.selenium.wrappers.EyesWebDriver;
 import com.applitools.utils.ArgumentGuard;
 import com.applitools.utils.ImageUtils;
 import java.awt.image.BufferedImage;
 import java.util.Iterator;
-import javafx.geometry.Pos;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
@@ -108,16 +104,19 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
      * @param frameLocationInScreenshot (Optional) The current frame's location in the screenshot.
      */
     public EyesWebDriverScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image,
-                                   ScreenshotType screenshotType, Location frameLocationInScreenshot) {
+                                   ScreenshotType screenshotType, Location frameLocationInScreenshot,
+                                   PositionProvider positionProvider) {
         super(image);
         ArgumentGuard.notNull(logger, "logger");
         ArgumentGuard.notNull(driver, "driver");
         this.logger = logger;
         this.driver = driver;
 
-        this.screenshotType = updateScreenshotType(screenshotType, image);
+        if (positionProvider == null) {
+            positionProvider = driver.getEyes().getPositionProvider();
+        }
 
-        PositionProvider positionProvider = driver.getEyes().getPositionProvider();
+        this.screenshotType = updateScreenshotType(screenshotType, image);
 
         frameChain = driver.getFrameChain();
         RectangleSize frameSize = getFrameSize(positionProvider);
@@ -197,7 +196,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
     }
 
     /**
-     * See {@link #EyesWebDriverScreenshot(Logger, EyesWebDriver, BufferedImage, ScreenshotType, Location)}.
+     * See {@link #EyesWebDriverScreenshot(Logger, EyesWebDriver, BufferedImage, ScreenshotType, Location, PositionProvider)}.
      * {@code screenshotType} defaults to {@code null}.
      * {@code frameLocationInScreenshot} defaults to {@code null}.
      * @param logger A Logger instance.
@@ -205,7 +204,7 @@ public class EyesWebDriverScreenshot extends EyesScreenshot {
      * @param image  The actual screenshot image.
      */
     public EyesWebDriverScreenshot(Logger logger, EyesWebDriver driver, BufferedImage image) {
-        this(logger, driver, image, null, null);
+        this(logger, driver, image, null, null, null);
     }
 
     // TODO replace "entireFrameSize" as frame window ctor identifier

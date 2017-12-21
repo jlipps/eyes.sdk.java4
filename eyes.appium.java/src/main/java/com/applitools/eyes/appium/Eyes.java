@@ -131,7 +131,11 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
 
     @Override
     protected ScrollingPositionProvider getScrollPositionProvider() {
-        return new AppiumScrollPositionProvider(logger, getEyesDriver());
+        // ensure we reuse the scroll position provider because it can have expensive state
+        if (positionProvider == null) {
+            positionProvider = new AppiumScrollPositionProvider(logger, getEyesDriver());
+        }
+        return positionProvider;
     }
 
     @Override
@@ -153,7 +157,8 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
             .getStitchedRegion(Region.EMPTY, getStitchOverlap(), regionPositionCompensation);
 
         return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null,
-            originalScrollViewPosition);
+            originalScrollViewPosition, scrollPositionProvider);
     }
 
+    // TODO override implementation of getFrameOrElementScreenshot
 }

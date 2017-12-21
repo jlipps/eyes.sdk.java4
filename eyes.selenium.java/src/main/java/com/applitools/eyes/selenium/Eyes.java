@@ -2071,7 +2071,8 @@ public class Eyes extends EyesBase {
             algo.getStitchedRegion(Region.EMPTY, getStitchOverlap(), regionPositionCompensation);
 
         switchTo.frames(originalFrameChain);
-        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null, originalFramePosition);
+        return new EyesWebDriverScreenshot(logger, driver, fullPageImage, null,
+            originalFramePosition, getScrollPositionProvider());
     }
 
     protected EyesWebDriverScreenshot getFrameOrElementScreenshot() {

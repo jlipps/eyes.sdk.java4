@@ -52,6 +52,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     private WebElement getCachedFirstVisibleChild () {
         WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
         if (firstVisibleChild == null) {
+            logger.verbose("Could not find first visible child in cache, getting (this could take a while)");
             firstVisibleChild = EyesAppiumUtils.getFirstVisibleChild(activeScroll);
         }
         return firstVisibleChild;
@@ -189,6 +190,11 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
 
     public void scrollToBottomRight() {
         setPosition(new Location(9999999, 9999999));
+    }
+
+    public Location scrollDown() {
+        EyesAppiumUtils.scrollByDirection(driver, SCROLL_DIRECTION_DOWN);
+        return getCurrentPosition();
     }
 
 }

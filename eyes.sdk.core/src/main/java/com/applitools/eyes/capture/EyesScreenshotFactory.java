@@ -2,6 +2,7 @@ package com.applitools.eyes.capture;
 
 import com.applitools.eyes.EyesScreenshot;
 
+import com.applitools.eyes.positioning.PositionProvider;
 import java.awt.image.BufferedImage;
 
 /**
@@ -9,4 +10,5 @@ import java.awt.image.BufferedImage;
  */
 public interface EyesScreenshotFactory {
     EyesScreenshot makeScreenshot(BufferedImage image);
+    EyesScreenshot makeScreenshot(BufferedImage image, PositionProvider positionProvider);
 }
