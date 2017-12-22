@@ -12,6 +12,7 @@ import com.applitools.eyes.debug.DebugScreenshotsProvider;
 import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.selenium.capture.FullPageCaptureAlgorithm;
+import com.applitools.eyes.selenium.positioning.NullRegionPositionCompensation;
 import com.applitools.eyes.selenium.positioning.RegionPositionCompensation;
 import com.applitools.utils.GeneralUtils;
 import java.awt.image.BufferedImage;
@@ -31,15 +32,20 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
             waitBeforeScreenshots);
     }
 
-    private RectangleSize captureAndStitchCurrentPart(Region partRegion) {
+    private RectangleSize captureAndStitchCurrentPart(Region partRegion, Region scrollViewRegion) {
 
         logger.verbose("Taking screenshot for current scroll location");
         GeneralUtils.sleep(waitBeforeScreenshots);
         BufferedImage partImage = imageProvider.getImage();
         debugScreenshotsProvider.save(partImage,
             "original-scrolled=" + scrollProvider.getCurrentPosition().toStringForFilename());
+        
+        // before we take new screenshots, we have to reset the region in the screenshot we care
+        // about, since from now on we just want the scroll view, not the entire view
+        setRegionInScreenshot(partImage, scrollViewRegion, new NullRegionPositionCompensation());
 
         partImage = cropPartToRegion(partImage, partRegion);
+
         stitchPartIntoContainer(partImage);
         return new RectangleSize(partImage.getWidth(), partImage.getHeight());
     }
@@ -53,6 +59,7 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
         Location lastSuccessfulLocation;
         RectangleSize lastSuccessfulPartSize = new RectangleSize(initialPartSize.getWidth(), initialPartSize.getHeight());
         PositionMemento originalStitchedState = scrollProvider.getState();
+        Region scrollViewRegion = ((AppiumScrollPositionProvider) scrollProvider).getScrollableViewRegion();
 
         do {
             lastSuccessfulLocation = currentPosition;
@@ -66,7 +73,7 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
             Region scrolledRegion = new Region(currentPosition.getX(), currentPosition.getY(), initialPartSize.getWidth(),
                 initialPartSize.getHeight());
             logger.verbose("The region to capture will be " + scrolledRegion);
-            lastSuccessfulPartSize = captureAndStitchCurrentPart(scrolledRegion);
+            lastSuccessfulPartSize = captureAndStitchCurrentPart(scrolledRegion, scrollViewRegion);
         }
         while (true);
 

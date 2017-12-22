@@ -122,20 +122,7 @@ public class FullPageCaptureAlgorithm {
     private BufferedImage cropToRegion(BufferedImage image, Region region,
         RegionPositionCompensation regionPositionCompensation) {
 
-        logger.verbose("Creating screenshot object...");
-        // We need the screenshot to be able to convert the region to screenshot coordinates.
-        EyesScreenshot screenshot = screenshotFactory.makeScreenshot(image);
-        logger.verbose("Getting region in screenshot...");
-
-        regionInScreenshot = getRegionInScreenshot(region, image, pixelRatio, screenshot,
-            regionPositionCompensation);
-
-        // if it didn't work the first time, just try again!??
-        if (!regionInScreenshot.getSize().equals(region.getSize())) {
-            // TODO - ITAI
-            regionInScreenshot = getRegionInScreenshot(region, image, pixelRatio, screenshot,
-                regionPositionCompensation);
-        }
+        setRegionInScreenshot(image, region, regionPositionCompensation);
 
         if (!regionInScreenshot.isEmpty()) {
             image = ImageUtils.getImagePart(image, regionInScreenshot);
@@ -165,6 +152,24 @@ public class FullPageCaptureAlgorithm {
             entireSize = positionProvider.getEntireSize();
         }
         return entireSize;
+    }
+
+    protected void setRegionInScreenshot (BufferedImage image, Region region,
+        RegionPositionCompensation regionPositionCompensation) {
+
+        logger.verbose("Creating screenshot object...");
+        // We need the screenshot to be able to convert the region to screenshot coordinates.
+        EyesScreenshot screenshot = screenshotFactory.makeScreenshot(image);
+        logger.verbose("Getting region in screenshot...");
+        regionInScreenshot = getRegionInScreenshot(region, image, pixelRatio, screenshot,
+            regionPositionCompensation);
+
+        // if it didn't work the first time, just try again!??
+        if (!regionInScreenshot.getSize().equals(region.getSize())) {
+            // TODO - ITAI
+            regionInScreenshot = getRegionInScreenshot(region, image, pixelRatio, screenshot,
+                regionPositionCompensation);
+        }
     }
 
     protected BufferedImage cropPartToRegion(BufferedImage partImage, Region partRegion) {

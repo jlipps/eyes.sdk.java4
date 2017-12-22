@@ -3,6 +3,7 @@ package com.applitools.eyes.appium;
 import com.applitools.eyes.Location;
 import com.applitools.eyes.Logger;
 import com.applitools.eyes.RectangleSize;
+import com.applitools.eyes.Region;
 import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.positioning.ScrollingPositionProvider;
@@ -23,6 +24,7 @@ import jdk.nashorn.internal.runtime.Context;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.json.Json;
 
@@ -66,6 +68,19 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
             return new Location(scrollLoc.x, scrollLoc.y);
         } catch (NoSuchElementException e) {
             return new Location(0, 0);
+        }
+    }
+
+    public Region getScrollableViewRegion() {
+        WebElement activeScroll;
+        try {
+            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+            Point scrollLoc = activeScroll.getLocation();
+            Rectangle scrollDim = activeScroll.getRect();
+            return new Region(scrollLoc.x, scrollLoc.y, scrollDim.width, scrollDim.height);
+        } catch (NoSuchElementException e) {
+            logger.verbose("WARNING: couldn't find scrollview, returning empty Region");
+            return new Region(0, 0, 0, 0);
         }
     }
 
