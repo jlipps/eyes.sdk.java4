@@ -73,9 +73,15 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
     }
 
     public static void scrollByDirection(AppiumDriver driver, String direction) {
+        EyesAppiumUtils.scrollByDirection(driver, direction, 1.0);
+    }
+
+    public static void scrollByDirection(AppiumDriver driver, String direction, double distanceRatio) {
         HashMap<String, String> args = new HashMap<>();
         args.put("direction", direction);
+        args.put("distance", Double.toString(distanceRatio));
         driver.executeScript("mobile: scroll", args);
+
     }
 
 

@@ -22,6 +22,7 @@ import jdk.nashorn.internal.objects.Global;
 import jdk.nashorn.internal.parser.JSONParser;
 import jdk.nashorn.internal.runtime.Context;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Rectangle;
@@ -38,8 +39,10 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     protected final Logger logger;
     protected final AppiumDriver driver;
     protected final EyesAppiumDriver eyesDriver;
+
     private WebElement firstVisibleChild;
     private ObjectMapper objectMapper;
+    private double distanceRatio;
 
     public AppiumScrollPositionProvider (Logger logger, EyesAppiumDriver driver) {
         ArgumentGuard.notNull(logger, "logger");
@@ -48,6 +51,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         this.logger = logger;
         this.driver = driver.getRemoteWebDriver();
         this.eyesDriver = driver;
+        distanceRatio = 0.0;
         objectMapper = new ObjectMapper();
     }
 
@@ -76,7 +80,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         try {
             activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
             Point scrollLoc = activeScroll.getLocation();
-            Rectangle scrollDim = activeScroll.getRect();
+            Dimension scrollDim = activeScroll.getSize();
             return new Region(scrollLoc.x, scrollLoc.y, scrollDim.width, scrollDim.height);
         } catch (NoSuchElementException e) {
             logger.verbose("WARNING: couldn't find scrollview, returning empty Region");
@@ -87,7 +91,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     /**
      * @return The scroll position of the current frame.
      */
-    public Location getCurrentPosition() {
+    public Location getCurrentPosition(boolean absolute) {
         logger.verbose("AppiumScrollPositionProvider - getCurrentPosition()");
         WebElement activeScroll;
         try {
@@ -97,8 +101,16 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         }
         Point loc = activeScroll.getLocation();
         Point childLoc = getCachedFirstVisibleChild().getLocation();
-        // the position of the scrollview is basically the offset of the first visible child
-        return new Location(loc.x - childLoc.x, loc.y - childLoc.y);
+        if (absolute) {
+            return new Location(loc.x * 2 - childLoc.x, loc.y * 2 - childLoc.y);
+        } else {
+            // the position of the scrollview is basically the offset of the first visible child
+            return new Location(loc.x - childLoc.x, loc.y - childLoc.y);
+        }
+    }
+
+    public Location getCurrentPosition() {
+        return getCurrentPosition(false);
     }
 
     /**
@@ -207,9 +219,21 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         setPosition(new Location(9999999, 9999999));
     }
 
-    public Location scrollDown() {
-        EyesAppiumUtils.scrollByDirection(driver, SCROLL_DIRECTION_DOWN);
-        return getCurrentPosition();
+    private double getScrollDistanceRatio() {
+        if (distanceRatio == 0.0) {
+            int viewportHeight = eyesDriver.getDefaultContentViewportSize(false).getHeight();
+            int scrollviewHeight = getScrollableViewRegion().getHeight();
+            distanceRatio = ((double) scrollviewHeight) / viewportHeight;
+            logger.verbose("Distance ratio for scroll down based on viewportHeight of " + viewportHeight +
+                " and scrollview height of " + scrollviewHeight + " is " + Double.toString(distanceRatio));
+        }
+
+        return distanceRatio;
+    }
+
+    public Location scrollDown(boolean returnAbsoluteLocation) {
+        EyesAppiumUtils.scrollByDirection(driver, SCROLL_DIRECTION_DOWN, getScrollDistanceRatio());
+        return getCurrentPosition(returnAbsoluteLocation);
     }
 
 }

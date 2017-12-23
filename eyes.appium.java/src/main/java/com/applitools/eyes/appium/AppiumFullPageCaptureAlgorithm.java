@@ -64,14 +64,14 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
         do {
             lastSuccessfulLocation = currentPosition;
             logger.verbose("Scrolling down to get next part");
-            currentPosition = ((AppiumScrollPositionProvider) scrollProvider).scrollDown();
-            logger.verbose("After scroll the position ended up at " + currentPosition);
+            currentPosition = ((AppiumScrollPositionProvider) scrollProvider).scrollDown(true);
+            logger.verbose("After scroll the virtual absolute position was at " + currentPosition);
             if (currentPosition.getX() == lastSuccessfulLocation.getX() && currentPosition.getY() == lastSuccessfulLocation.getY()) {
                 logger.verbose("Scroll had no effect, breaking the scroll loop");
                 break;
             }
-            Region scrolledRegion = new Region(currentPosition.getX(), currentPosition.getY(), initialPartSize.getWidth(),
-                initialPartSize.getHeight());
+            Region scrolledRegion = new Region(currentPosition.getX(), currentPosition.getY(), scrollViewRegion.getWidth(),
+                scrollViewRegion.getHeight());
             logger.verbose("The region to capture will be " + scrolledRegion);
             lastSuccessfulPartSize = captureAndStitchCurrentPart(scrolledRegion, scrollViewRegion);
         }

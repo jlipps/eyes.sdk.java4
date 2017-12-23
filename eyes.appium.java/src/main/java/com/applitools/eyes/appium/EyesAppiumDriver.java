@@ -53,6 +53,10 @@ public class EyesAppiumDriver extends EyesWebDriver {
         return intRectMap;
     }
 
+    public int getStatusBarHeight() {
+        return ((Long) getCachedSessionDetails().get("statBarHeight")).intValue();
+    }
+
     public double getDevicePixelRatio () {
         return ((Long) getCachedSessionDetails().get("pixelRatio")).doubleValue();
     }
