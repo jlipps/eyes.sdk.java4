@@ -20,7 +20,7 @@ public class AppiumIOSFullPageScreenshotTest {
 
         capabilities.setCapability("platformName", "iOS");
         capabilities.setCapability("deviceName", "iPhone 8 Plus");
-        capabilities.setCapability("platformVersion", "11.1");
+        capabilities.setCapability("platformVersion", "11.2");
         // TODO do not merge until this is replaced with a non-user-specific path
         capabilities.setCapability("app", "/Users/jlipps/Code/testapps/AppliTools-XCUI-Demo.app");
         capabilities.setCapability("useNewWDA", true);
@@ -45,8 +45,10 @@ public class AppiumIOSFullPageScreenshotTest {
 
             // Start the test.
             eyes.open(driver, "Applitools Demo App", "Appium Native iOS with Full page screenshot");
-            driver.findElement(MobileBy.AccessibilityId("show elements")).click();
-            eyes.checkWindow("Big Table");
+            //driver.findElement(MobileBy.AccessibilityId("show elements")).click();
+            //eyes.checkWindow("Big Table");
+            driver.findElement(MobileBy.AccessibilityId("Collection view")).click();
+            eyes.checkWindow("Short collection view");
 
             // End the test.
             eyes.close();

@@ -70,7 +70,7 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
                 logger.verbose("Scroll had no effect, breaking the scroll loop");
                 break;
             }
-            Region scrolledRegion = new Region(currentPosition.getX(), currentPosition.getY(), scrollViewRegion.getWidth(),
+            Region scrolledRegion = new Region(currentPosition.getX(), currentPosition.getY() + 1, scrollViewRegion.getWidth(),
                 scrollViewRegion.getHeight());
             logger.verbose("The region to capture will be " + scrolledRegion);
             lastSuccessfulPartSize = captureAndStitchCurrentPart(scrolledRegion, scrollViewRegion);

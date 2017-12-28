@@ -82,6 +82,12 @@ public class FullPageCaptureAlgorithm {
 
     protected void moveToTopLeft() {
         logger.verbose("Moving to the top left of the screen");
+        currentPosition = originProvider.getCurrentPosition();
+        if (currentPosition.getX() <= 0 && currentPosition.getY() <= 0) {
+            logger.verbose("We are already at the top left, doing nothing");
+            return;
+        }
+
         int setPositionRetries = 3;
         do {
             originProvider.setPosition(new Location(0, 0));
@@ -91,6 +97,8 @@ public class FullPageCaptureAlgorithm {
         } while (currentPosition.getX() != 0
             && currentPosition.getY() != 0
             && (--setPositionRetries > 0));
+        // TODO examine the while loop condition logic above, currently we will stop scrolling if
+        // we get to 0 on EITHER the x or y axis; shouldn't we need to get there on both?
 
         if (currentPosition.getX() != 0 || currentPosition.getY() != 0) {
             originProvider.restoreState(originalPosition);

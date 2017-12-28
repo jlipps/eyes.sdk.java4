@@ -43,6 +43,8 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     private WebElement firstVisibleChild;
     private ObjectMapper objectMapper;
     private double distanceRatio;
+    private int verticalScrollGap;
+    private boolean isVerticalScrollGapSet;
 
     public AppiumScrollPositionProvider (Logger logger, EyesAppiumDriver driver) {
         ArgumentGuard.notNull(logger, "logger");
@@ -53,6 +55,8 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         this.eyesDriver = driver;
         distanceRatio = 0.0;
         objectMapper = new ObjectMapper();
+        verticalScrollGap = 0;
+        isVerticalScrollGapSet = false;
     }
 
     private WebElement getCachedFirstVisibleChild () {
@@ -60,32 +64,49 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
         if (firstVisibleChild == null) {
             logger.verbose("Could not find first visible child in cache, getting (this could take a while)");
             firstVisibleChild = EyesAppiumUtils.getFirstVisibleChild(activeScroll);
+
         }
         return firstVisibleChild;
     }
 
     public Location getScrollableViewLocation() {
-        WebElement activeScroll;
+        logger.verbose("Getting the location of the scrollable view");
+        WebElement activeScroll, firstVisChild;
+        Point scrollLoc, firstVisChildLoc;
         try {
             activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-            Point scrollLoc = activeScroll.getLocation();
-            return new Location(scrollLoc.x, scrollLoc.y);
+            firstVisChild = getCachedFirstVisibleChild();
         } catch (NoSuchElementException e) {
             return new Location(0, 0);
         }
+        scrollLoc = activeScroll.getLocation();
+        firstVisChildLoc = firstVisChild.getLocation();
+        if (!isVerticalScrollGapSet) {
+            verticalScrollGap = firstVisChildLoc.y - scrollLoc.y;
+            isVerticalScrollGapSet = true;
+        }
+        Location loc = new Location(scrollLoc.x, scrollLoc.y + verticalScrollGap);
+        logger.verbose("The location of the scrollable view is " + loc + ", accounting for a " +
+            "vertical scroll gap of " + verticalScrollGap);
+        return loc;
     }
 
     public Region getScrollableViewRegion() {
+        logger.verbose("Getting the region of the scrollable view");
         WebElement activeScroll;
+        Region reg;
         try {
             activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-            Point scrollLoc = activeScroll.getLocation();
+            Location scrollLoc = getScrollableViewLocation();
             Dimension scrollDim = activeScroll.getSize();
-            return new Region(scrollLoc.x, scrollLoc.y, scrollDim.width, scrollDim.height);
+            reg = new Region(scrollLoc.getX(), scrollLoc.getY(), scrollDim.width, scrollDim.height - verticalScrollGap);
         } catch (NoSuchElementException e) {
             logger.verbose("WARNING: couldn't find scrollview, returning empty Region");
-            return new Region(0, 0, 0, 0);
+            reg =new Region(0, 0, 0, 0);
         }
+        logger.verbose("The region of the scrollable view is " + reg + ", accounting for a vertical " +
+            "scroll gap of " + verticalScrollGap);
+        return reg;
     }
 
     /**
@@ -93,20 +114,18 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
      */
     public Location getCurrentPosition(boolean absolute) {
         logger.verbose("AppiumScrollPositionProvider - getCurrentPosition()");
-        WebElement activeScroll;
-        try {
-            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-        } catch (NoSuchElementException e) {
-            return new Location(0, 0);
-        }
-        Point loc = activeScroll.getLocation();
+        Location loc = getScrollableViewLocation();
         Point childLoc = getCachedFirstVisibleChild().getLocation();
+        logger.verbose("The first visible child is at " + childLoc);
+        Location pos;
         if (absolute) {
-            return new Location(loc.x * 2 - childLoc.x, loc.y * 2 - childLoc.y);
+            pos = new Location(loc.getX() * 2 - childLoc.x, loc.getY() * 2 - childLoc.y);
         } else {
             // the position of the scrollview is basically the offset of the first visible child
-            return new Location(loc.x - childLoc.x, loc.y - childLoc.y);
+            pos = new Location(loc.getX() - childLoc.x, loc.getY() - childLoc.y);
         }
+        logger.verbose("The current scroll position is " + pos);
+        return pos;
     }
 
     public Location getCurrentPosition() {
@@ -202,8 +221,9 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
             logger.verbose("WARNING: could not parse contentSize JSON: " + e);
             return new RectangleSize(0, 0);
         }
-        RectangleSize result = new RectangleSize(contentSize.width, contentSize.scrollableOffset);
-        logger.verbose("AppiumScrollPositionProvider - Entire size: " + result);
+        RectangleSize result = new RectangleSize(contentSize.width, contentSize.scrollableOffset + verticalScrollGap);
+        logger.verbose("AppiumScrollPositionProvider - Entire size: " + result + " (Accounting for " +
+            " a vertical scroll gap of " + verticalScrollGap + ")");
         return result;
     }
 
@@ -222,7 +242,7 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     private double getScrollDistanceRatio() {
         if (distanceRatio == 0.0) {
             int viewportHeight = eyesDriver.getDefaultContentViewportSize(false).getHeight();
-            int scrollviewHeight = getScrollableViewRegion().getHeight();
+            int scrollviewHeight = getScrollableViewRegion().getHeight() - verticalScrollGap;
             distanceRatio = ((double) scrollviewHeight) / viewportHeight;
             logger.verbose("Distance ratio for scroll down based on viewportHeight of " + viewportHeight +
                 " and scrollview height of " + scrollviewHeight + " is " + Double.toString(distanceRatio));
