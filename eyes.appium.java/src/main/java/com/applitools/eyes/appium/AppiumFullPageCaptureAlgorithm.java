@@ -38,7 +38,7 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
         GeneralUtils.sleep(waitBeforeScreenshots);
         BufferedImage partImage = imageProvider.getImage();
         debugScreenshotsProvider.save(partImage,
-            "original-scrolled=" + scrollProvider.getCurrentPosition().toStringForFilename());
+            "original-scrolled=" + currentPosition.toStringForFilename());
         
         // before we take new screenshots, we have to reset the region in the screenshot we care
         // about, since from now on we just want the scroll view, not the entire view
@@ -59,17 +59,26 @@ public class AppiumFullPageCaptureAlgorithm extends FullPageCaptureAlgorithm {
         Location lastSuccessfulLocation;
         RectangleSize lastSuccessfulPartSize = new RectangleSize(initialPartSize.getWidth(), initialPartSize.getHeight());
         PositionMemento originalStitchedState = scrollProvider.getState();
-        Region scrollViewRegion = ((AppiumScrollPositionProvider) scrollProvider).getScrollableViewRegion();
+        // scrollViewRegion is the (upscaled) region of the scrollview on the screen
+        Region scrollViewRegion = scaleSafe(((AppiumScrollPositionProvider) scrollProvider).getScrollableViewRegion());
+        // we modify the region by one pixel to make sure we don't accidentally get a pixel of the header above it
+        Location newLoc = new Location(scrollViewRegion.getLeft(), scrollViewRegion.getTop() + 1);
+        RectangleSize newSize = new RectangleSize(scrollViewRegion.getWidth(), scrollViewRegion.getHeight() - 1);
+        scrollViewRegion.setLocation(newLoc);
+        scrollViewRegion.setSize(newSize);
 
         do {
             lastSuccessfulLocation = currentPosition;
             logger.verbose("Scrolling down to get next part");
-            currentPosition = ((AppiumScrollPositionProvider) scrollProvider).scrollDown(true);
-            logger.verbose("After scroll the virtual absolute position was at " + currentPosition);
+            currentPosition = scaleSafe(((AppiumScrollPositionProvider) scrollProvider).scrollDown(true));
+
+            logger.verbose("After scroll the virtual absolute and scaled position was at " + currentPosition);
             if (currentPosition.getX() == lastSuccessfulLocation.getX() && currentPosition.getY() == lastSuccessfulLocation.getY()) {
                 logger.verbose("Scroll had no effect, breaking the scroll loop");
                 break;
             }
+            // here we make sure to say that the region we have scrolled to in the main screenshot
+            // is also offset by 1, to match the change we made to the scrollViewRegion
             Region scrolledRegion = new Region(currentPosition.getX(), currentPosition.getY() + 1, scrollViewRegion.getWidth(),
                 scrollViewRegion.getHeight());
             logger.verbose("The region to capture will be " + scrolledRegion);

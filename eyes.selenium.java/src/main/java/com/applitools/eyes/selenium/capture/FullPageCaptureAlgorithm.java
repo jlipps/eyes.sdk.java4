@@ -43,6 +43,10 @@ public class FullPageCaptureAlgorithm {
     private BufferedImage stitchedImage;
     protected Location currentPosition;
 
+    // need to keep track of whether location and dimension coordinates returned by the driver
+    // are already scaled to the pixel ratio, or are in "logical" pixels
+    protected boolean coordinatesAreScaled;
+
     protected final PositionProvider positionProvider;
     protected final ScrollingPositionProvider scrollProvider;
 
@@ -69,6 +73,7 @@ public class FullPageCaptureAlgorithm {
         this.regionInScreenshot = null;
         this.stitchedImage = null;
         this.currentPosition = null;
+        this.coordinatesAreScaled = false;
     }
 
     private void saveDebugScreenshotPart(BufferedImage image,
@@ -121,6 +126,7 @@ public class FullPageCaptureAlgorithm {
         // FIXME - cropping should be overlaid, so a single cut provider will only handle a single part of the image.
         cutProvider = cutProvider.scale(pixelRatio);
         if (!(cutProvider instanceof NullCutProvider)) {
+            logger.verbose("We have a cut provider, so cutting top left screenshot");
             image = cutProvider.cut(image);
             debugScreenshotsProvider.save(image, "original-cut");
         }
@@ -141,13 +147,6 @@ public class FullPageCaptureAlgorithm {
             saveDebugScreenshotPart(image, region, "cropped");
         }
 
-        if (pixelRatio == 1.0) {
-            logger.verbose("Pixel ratio was 1, no need to scale");
-        } else {
-            logger.verbose("Pixel ratio was " + pixelRatio + "; scaling");
-            image = ImageUtils.scaleImage(image, scaleProvider);
-            debugScreenshotsProvider.save(image, "scaled");
-        }
 
         return image;
     }
@@ -194,7 +193,7 @@ public class FullPageCaptureAlgorithm {
             logger.verbose("cutting...");
             partImage = cutProvider.cut(partImage);
             debugScreenshotsProvider.save(partImage,
-                "original-scrolled-cut-" + positionProvider.getCurrentPosition()
+                "original-scrolled-cut-" + currentPosition
                     .toStringForFilename());
         }
 
@@ -203,17 +202,9 @@ public class FullPageCaptureAlgorithm {
             partImage = ImageUtils.getImagePart(partImage, regionInScreenshot);
             saveDebugScreenshotPart(partImage, partRegion,
                 "original-scrolled-"
-                    + positionProvider.getCurrentPosition().toStringForFilename());
+                    + currentPosition.toStringForFilename());
         }
 
-        if (pixelRatio != 1.0) {
-            logger.verbose("scaling...");
-            // FIXME - scaling should be refactored
-            partImage = ImageUtils.scaleImage(partImage, scaleProvider);
-            saveDebugScreenshotPart(partImage, partRegion,
-                "original-scrolled-" + positionProvider.getCurrentPosition()
-                    .toStringForFilename() + "-scaled-");
-        }
         return partImage;
     }
 
@@ -246,19 +237,21 @@ public class FullPageCaptureAlgorithm {
 
     private void captureAndStitchPart(Region partRegion) {
         logger.verbose(String.format("Taking screenshot for %s", partRegion));
-        // Set the position to the part's top/left.
-        positionProvider.setPosition(partRegion.getLocation());
+        // Set the position to the part's top/left. May need to downscale since partRegion is in
+        // upscaled dimensions
+        positionProvider.setPosition(downscaleSafe(partRegion.getLocation()));
         // Giving it time to stabilize.
         GeneralUtils.sleep(waitBeforeScreenshots);
-        // Screen size may cause the scroll to only reach part of the way.
-        currentPosition = positionProvider.getCurrentPosition();
+        // Screen size may cause the scroll to only reach part of the way. Make sure we get the
+        // current position in scaled coordinates if necessary
+        currentPosition = scaleSafe(positionProvider.getCurrentPosition());
         logger.verbose(String.format("Set position to %s", currentPosition));
 
         // Actually taking the screenshot.
         logger.verbose("Getting image...");
         BufferedImage partImage = imageProvider.getImage();
         debugScreenshotsProvider.save(partImage,
-            "original-scrolled-" + positionProvider.getCurrentPosition().toStringForFilename());
+            "original-scrolled-" + currentPosition.toStringForFilename());
 
         partImage = cropPartToRegion(partImage, partRegion);
         stitchPartIntoContainer(partImage);
@@ -350,7 +343,8 @@ public class FullPageCaptureAlgorithm {
         // get the entire size of the region context, falling back to image size
 
         boolean checkingAnElement = !region.isEmpty();
-        RectangleSize entireSize = getEntireSize(image, checkingAnElement);
+        RectangleSize entireSize = scaleSafe(getEntireSize(image, checkingAnElement));
+        logger.verbose("Scaled entire size is " + entireSize);
 
         // If the image is already the same as or bigger than the entire size, we're done!
         // Notice that this might still happen even if we used
@@ -382,6 +376,15 @@ public class FullPageCaptureAlgorithm {
 
         captureAndStitchTailParts(image, stitchingOverlap, entireSize, initialPartSize);
 
+        // Finally, scale the image appropriately
+        if (pixelRatio == 1.0) {
+            logger.verbose("Pixel ratio was 1, no need to scale stitched image");
+        } else {
+            logger.verbose("Pixel ratio was " + pixelRatio + "; scaling stitched image");
+            stitchedImage = ImageUtils.scaleImage(stitchedImage, scaleProvider);
+            debugScreenshotsProvider.save(stitchedImage, "scaled");
+        }
+
         return stitchedImage;
     }
 
@@ -392,13 +395,12 @@ public class FullPageCaptureAlgorithm {
             .getIntersectedRegion(region, CoordinatesType.SCREENSHOT_AS_IS);
 
         logger.verbose("Done! Region in screenshot: " + regionInScreenshot);
-        regionInScreenshot = regionInScreenshot.scale(pixelRatio);
-        logger.verbose("Scaled region: " + regionInScreenshot);
 
         if (regionPositionCompensation == null) {
             regionPositionCompensation = new NullRegionPositionCompensation();
         }
 
+        // TODO probably need to adjust this logic now that the regionInScreenshot is always upscaled
         regionInScreenshot = regionPositionCompensation
             .compensateRegionPosition(regionInScreenshot, pixelRatio);
 
@@ -408,5 +410,33 @@ public class FullPageCaptureAlgorithm {
         regionInScreenshot.intersect(new Region(0, 0, image.getWidth(), image.getHeight()));
         logger.verbose("Region after intersect: " + regionInScreenshot);
         return regionInScreenshot;
+    }
+
+    protected RectangleSize scaleSafe(RectangleSize rs) {
+        if (coordinatesAreScaled) {
+            return rs;
+        }
+        return rs.scale(pixelRatio);
+    }
+
+    protected Location scaleSafe(Location loc) {
+        if (coordinatesAreScaled) {
+            return loc;
+        }
+        return loc.scale(pixelRatio);
+    }
+
+    protected Region scaleSafe(Region reg) {
+        if (coordinatesAreScaled) {
+            return reg;
+        }
+        return reg.scale(pixelRatio);
+    }
+
+    protected Location downscaleSafe(Location loc) {
+        if (coordinatesAreScaled) {
+            return loc;
+        }
+        return loc.scale(1 / pixelRatio);
     }
 }

@@ -64,8 +64,8 @@ public class RectangleSize {
      * @return A scaled version of the current size.
      */
     public RectangleSize scale(double scaleRatio) {
-        return new RectangleSize((int) Math.ceil(width * scaleRatio),
-                (int) Math.ceil(height * scaleRatio));
+        return new RectangleSize((int) Math.round(width * scaleRatio),
+                (int) Math.round(height * scaleRatio));
     }
 
     /**

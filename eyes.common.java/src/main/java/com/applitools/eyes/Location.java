@@ -81,7 +81,7 @@ public class Location implements Cloneable {
      * @return A scaled copy of the current location.
      */
     public Location scale(double scaleRatio) {
-        return new Location((int) Math.ceil(x * scaleRatio), (int) Math.ceil(y * scaleRatio));
+        return new Location((int) Math.round(x * scaleRatio), (int) Math.round(y * scaleRatio));
     }
 
     /**

@@ -58,10 +58,10 @@ public class FixedCutProvider implements CutProvider {
     }
 
     public CutProvider scale(double scaleRatio) {
-        int scaledHeader = (int) Math.ceil(header * scaleRatio);
-        int scaledFooter = (int) Math.ceil(footer * scaleRatio);
-        int scaledLeft = (int) Math.ceil(left * scaleRatio);
-        int scaledRight = (int) Math.ceil(right * scaleRatio);
+        int scaledHeader = (int) Math.round(header * scaleRatio);
+        int scaledFooter = (int) Math.round(footer * scaleRatio);
+        int scaledLeft = (int) Math.round(left * scaleRatio);
+        int scaledRight = (int) Math.round(right * scaleRatio);
 
         return new FixedCutProvider(scaledHeader, scaledFooter, scaledLeft, scaledRight);
     }
