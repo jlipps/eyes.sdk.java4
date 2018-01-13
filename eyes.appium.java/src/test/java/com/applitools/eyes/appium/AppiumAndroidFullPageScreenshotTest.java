@@ -3,6 +3,7 @@ package com.applitools.eyes.appium;
 import com.applitools.eyes.LogHandler;
 import com.applitools.eyes.StdoutLogHandler;
 import io.appium.java_client.MobileBy;
+import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import java.net.URL;
 import java.util.HashMap;
@@ -12,23 +13,21 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
-public class AppiumIOSFullPageScreenshotTest {
+public class AppiumAndroidFullPageScreenshotTest {
     public static void main(String[] args) throws Exception {
 
         // Set desired capabilities.
         DesiredCapabilities capabilities = new DesiredCapabilities();
 
-        capabilities.setCapability("platformName", "iOS");
-        capabilities.setCapability("deviceName", "iPhone 8 Plus");
-        capabilities.setCapability("platformVersion", "11.2");
+        capabilities.setCapability("platformName", "Android");
+        capabilities.setCapability("deviceName", "Android Emulator");
+        capabilities.setCapability("platformVersion", "8.1");
         // TODO do not merge until this is replaced with a non-user-specific path
-        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/AppliTools-XCUI-Demo.app");
-        capabilities.setCapability("useNewWDA", false);
-        capabilities.setCapability("noReset", true);
+        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/ApiDemos-debug.apk");
         capabilities.setCapability("newCommandTimeout", 300);
 
         // Open the app.
-        IOSDriver driver = new IOSDriver<>(new URL("http://127.0.0.1:4723/wd/hub"), capabilities);
+        AndroidDriver driver = new AndroidDriver(new URL("http://127.0.0.1:4723/wd/hub"), capabilities);
 
         // Initialize the eyes SDK and set your private API key.
         Eyes eyes = new Eyes();
@@ -43,13 +42,11 @@ public class AppiumIOSFullPageScreenshotTest {
         eyes.setStitchOverlap(44);
 
         try {
-
             // Start the test.
-            eyes.open(driver, "Applitools Demo App", "Appium Native iOS with Full page screenshot");
-            driver.findElement(MobileBy.AccessibilityId("show elements")).click();
-            eyes.checkWindow("Big Table");
-//            driver.findElement(MobileBy.AccessibilityId("Collection view")).click();
-//            eyes.checkWindow("Short collection view");
+            eyes.open(driver, "ApiDemos", "Appium Native Android with Full page screenshot");
+
+            driver.findElement(MobileBy.AccessibilityId("App")).click();
+            eyes.checkWindow("Main scroll");
 
             // End the test.
             eyes.close();

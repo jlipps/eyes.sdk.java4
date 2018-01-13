@@ -116,6 +116,7 @@ public class FullPageCaptureAlgorithm {
         scaleProvider = scaleProviderFactory.getScaleProvider(image.getWidth());
         // Notice that we want to cut/crop an image before we scale it, we need to change
         pixelRatio = 1 / scaleProvider.getScaleRatio();
+        logger.verbose("Set pixel ratio for this run to " + pixelRatio);
 
         // FIXME - cropping should be overlaid, so a single cut provider will only handle a single part of the image.
         cutProvider = cutProvider.scale(pixelRatio);
@@ -129,15 +130,21 @@ public class FullPageCaptureAlgorithm {
 
     private BufferedImage cropToRegion(BufferedImage image, Region region,
         RegionPositionCompensation regionPositionCompensation) {
+        logger.verbose("Cropping image with dimensions [" + image.getWidth() + ", " + image.getHeight() + "] to region " + region);
 
         setRegionInScreenshot(image, region, regionPositionCompensation);
 
-        if (!regionInScreenshot.isEmpty()) {
+        if (regionInScreenshot.isEmpty()) {
+            logger.verbose("Region in screenshot was empty, no need to crop");
+        } else {
             image = ImageUtils.getImagePart(image, regionInScreenshot);
             saveDebugScreenshotPart(image, region, "cropped");
         }
 
-        if (pixelRatio != 1.0) {
+        if (pixelRatio == 1.0) {
+            logger.verbose("Pixel ratio was 1, no need to scale");
+        } else {
+            logger.verbose("Pixel ratio was " + pixelRatio + "; scaling");
             image = ImageUtils.scaleImage(image, scaleProvider);
             debugScreenshotsProvider.save(image, "scaled");
         }
@@ -350,6 +357,7 @@ public class FullPageCaptureAlgorithm {
         // "getImagePart", since "entirePageSize" might be that of a frame.
         if (image.getWidth() >= entireSize.getWidth() && image.getHeight() >= entireSize
             .getHeight()) {
+            logger.verbose("Image was already bigger than entire size, so returning straightaway");
             originProvider.restoreState(originalPosition);
 
             return image;

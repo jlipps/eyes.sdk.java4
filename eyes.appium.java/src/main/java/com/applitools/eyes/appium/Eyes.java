@@ -10,6 +10,7 @@ import com.applitools.eyes.ScaleProviderFactory;
 import com.applitools.eyes.capture.EyesScreenshotFactory;
 import com.applitools.eyes.positioning.PositionProvider;
 import com.applitools.eyes.positioning.ScrollingPositionProvider;
+import com.applitools.eyes.scaling.FixedScaleProviderFactory;
 import com.applitools.eyes.selenium.ContextBasedScaleProviderFactory;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
 import com.applitools.eyes.selenium.capture.EyesWebDriverScreenshot;
@@ -68,11 +69,11 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         this.positionProvider = (AppiumScrollPositionProvider) positionProvider;
     }
 
+    @Override
     protected ScaleProviderFactory getScaleProviderFactory() {
-        return new ContextBasedScaleProviderFactory(logger, getPositionProvider().getEntireSize(),
-            viewportSizeHandler.get(), getDevicePixelRatio(),
-            EyesAppiumUtils.isMobileDevice(getDriver()),
-            scaleProviderHandler);
+        // in the context of appium, we know the pixel ratio by getting it directly from the appium
+        // server, so there's no need to figure anything out on the fly. just return a Fixed one
+        return new FixedScaleProviderFactory(1 / devicePixelRatio, scaleProviderHandler);
     }
 
     /**

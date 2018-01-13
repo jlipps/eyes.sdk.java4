@@ -242,8 +242,11 @@ public class AppiumScrollPositionProvider implements SeleniumScrollingPositionPr
     private double getScrollDistanceRatio() {
         if (distanceRatio == 0.0) {
             int viewportHeight = eyesDriver.getDefaultContentViewportSize(false).getHeight();
-            int scrollviewHeight = getScrollableViewRegion().getHeight() - verticalScrollGap;
-            distanceRatio = ((double) scrollviewHeight) / viewportHeight;
+            double pixelRatio = eyesDriver.getDevicePixelRatio();
+            // viewport height is in device pixels, whereas element heights are in logical pixels,
+            // so need to scale the scrollview height accordingly.
+            double scrollviewHeight = ((getScrollableViewRegion().getHeight() - verticalScrollGap) * pixelRatio);
+            distanceRatio = scrollviewHeight / viewportHeight;
             logger.verbose("Distance ratio for scroll down based on viewportHeight of " + viewportHeight +
                 " and scrollview height of " + scrollviewHeight + " is " + Double.toString(distanceRatio));
         }
