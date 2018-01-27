@@ -134,7 +134,8 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
     protected ScrollingPositionProvider getScrollPositionProvider() {
         // ensure we reuse the scroll position provider because it can have expensive state
         if (positionProvider == null) {
-            positionProvider = new AppiumScrollPositionProvider(logger, getEyesDriver());
+            AppiumScrollPositionProviderFactory scrollFactory = new AppiumScrollPositionProviderFactory(logger, getEyesDriver());
+            positionProvider = scrollFactory.getScrollPositionProvider();
         }
         return positionProvider;
     }
@@ -148,9 +149,12 @@ public class Eyes extends com.applitools.eyes.selenium.Eyes {
         ScaleProviderFactory scaleProviderFactory = updateScalingParams();
 
         AppiumScrollPositionProvider scrollPositionProvider = (AppiumScrollPositionProvider) getScrollPositionProvider();
-        FullPageCaptureAlgorithm algo = new AppiumFullPageCaptureAlgorithm(logger,
+
+        AppiumCaptureAlgorithmFactory algoFactory = new AppiumCaptureAlgorithmFactory(getEyesDriver(), logger,
             scrollPositionProvider, imageProvider, debugScreenshotsProvider, scaleProviderFactory,
             cutProviderHandler.get(), screenshotFactory, getWaitBeforeScreenshots());
+
+        FullPageCaptureAlgorithm algo = algoFactory.getAlgorithm();
 
         Location originalScrollViewPosition = scrollPositionProvider.getScrollableViewLocation();
 

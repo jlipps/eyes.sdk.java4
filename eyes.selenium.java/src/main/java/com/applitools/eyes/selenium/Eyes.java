@@ -1375,6 +1375,7 @@ public class Eyes extends EyesBase {
         } catch (Exception e) {
             logger.verbose(
                 "Failed to extract device pixel ratio! Using default.");
+            logger.verbose(e.getMessage());
             devicePixelRatio = DEFAULT_DEVICE_PIXEL_RATIO;
         }
         logger.verbose(String.format("Device pixel ratio: %f", devicePixelRatio));

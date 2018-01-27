@@ -3,12 +3,16 @@
  */
 package com.applitools.eyes.appium;
 
+import com.applitools.eyes.RectangleSize;
 import com.applitools.eyes.selenium.EyesSeleniumUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import io.appium.java_client.remote.MobileCapabilityType;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.HasCapabilities;
@@ -81,8 +85,28 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
         args.put("direction", direction);
         args.put("distance", Double.toString(distanceRatio));
         driver.executeScript("mobile: scroll", args);
-
     }
 
+    public static void scrollBackToElement(AndroidDriver driver, WebElement scroller, WebElement scrollToEl) {
+        HashMap<String, String> args = new HashMap<>();
+        args.put("elementId", scroller.toString());
+        args.put("elementToId", scrollToEl.toString());
+        driver.executeScript("mobile: scroll", args);
+    }
 
+    public static ContentSize getContentSize(AppiumDriver driver, WebElement element) throws IOException {
+        String contentSizeJson = element.getAttribute("contentSize");
+        ContentSize contentSize;
+        ObjectMapper objectMapper = new ObjectMapper();
+        contentSize = objectMapper.readValue(contentSizeJson, ContentSize.class);
+        return contentSize;
+    }
+
+    public static LastScrollData getLastScrollData(AppiumDriver driver) {
+        Map<String, Long> scrollData = (Map<String, Long>) driver.getSessionDetail("lastScrollData");
+        if (scrollData == null) {
+            return null;
+        }
+        return new LastScrollData(scrollData);
+    }
 }
