@@ -12,6 +12,7 @@ import com.applitools.utils.ArgumentGuard;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.appium.java_client.AppiumDriver;
 import java.io.IOException;
+import javax.annotation.Nullable;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
@@ -25,6 +26,8 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
     protected final EyesAppiumDriver eyesDriver;
     protected double distanceRatio;
     protected int verticalScrollGap;
+
+    protected ContentSize contentSize;
 
     private WebElement firstVisibleChild;
     private boolean isVerticalScrollGapSet;
@@ -51,6 +54,20 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
         return firstVisibleChild;
     }
 
+    @Nullable
+    protected ContentSize getCachedContentSize () {
+        if (contentSize == null) {
+            WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+            try {
+                contentSize = EyesAppiumUtils.getContentSize(driver, activeScroll);
+                logger.verbose("Retrieved contentSize, it is: " + contentSize);
+            } catch (IOException e) {
+                logger.log("WARNING: could not retrieve content size from active scroll element");
+            }
+        }
+        return contentSize;
+    }
+
     public Location getScrollableViewLocation() {
         logger.verbose("Getting the location of the scrollable view");
         WebElement activeScroll, firstVisChild;
@@ -63,6 +80,7 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
         }
         scrollLoc = activeScroll.getLocation();
         firstVisChildLoc = firstVisChild.getLocation();
+        logger.verbose("The location of the first visible child is " + firstVisChildLoc);
         if (!isVerticalScrollGapSet) {
             verticalScrollGap = firstVisChildLoc.y - scrollLoc.y;
             isVerticalScrollGapSet = true;
@@ -128,29 +146,23 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
      * to.
      */
     public RectangleSize getEntireSize() {
-        WebElement activeScroll;
         try {
             int windowHeight = driver.manage().window().getSize().getHeight();
-            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-            ContentSize contentSize = EyesAppiumUtils.getContentSize(driver, activeScroll);
-            int scrollContentHeight = calcEntireContentHeight(contentSize);
+            ContentSize contentSize = getCachedContentSize();
+            int scrollContentHeight = contentSize.scrollableOffset;
             int outsideScrollviewHeight = windowHeight - contentSize.height;
             RectangleSize result = new RectangleSize(contentSize.width,
                 scrollContentHeight + outsideScrollviewHeight + verticalScrollGap);
             logger.verbose("AppiumScrollPositionProvider - Entire size: " + result + " (Accounting for " +
-                " a vertical scroll gap of " + verticalScrollGap + ")");
+                "a vertical scroll gap of " + verticalScrollGap + ", with a scrollable offset of " +
+                contentSize.scrollableOffset + ")");
             return result;
         } catch (NoSuchElementException e) {
             logger.verbose("Could not retrieve the first scrollable view, looks like there isn't one. " +
                            "Will return the viewport size instead.");
             return eyesDriver.getDefaultContentViewportSize();
-        } catch (IOException e) {
-            logger.verbose("WARNING: could not retrieve contentSize: " + e);
-            return new RectangleSize(0, 0);
         }
     }
-
-    protected abstract int calcEntireContentHeight (ContentSize contentSize);
 
     public PositionMemento getState() {
         return new ScrollPositionMemento(getCurrentPosition());

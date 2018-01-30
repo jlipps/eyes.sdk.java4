@@ -80,10 +80,6 @@ public class IOSScrollPositionProvider extends AppiumScrollPositionProvider {
         }
     }
 
-    protected int calcEntireContentHeight (ContentSize contentSize) {
-        return contentSize.scrollableOffset;
-    }
-
     public void setPosition(WebElement element) {
         HashMap<String, Object> params = new HashMap<>();
         params.put("toVisible", "true");

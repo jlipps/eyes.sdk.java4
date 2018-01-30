@@ -13,11 +13,13 @@ import io.appium.java_client.remote.MobileCapabilityType;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.HasCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebElement;
 
 public class EyesAppiumUtils extends EyesSeleniumUtils{
 
@@ -87,11 +89,11 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
         driver.executeScript("mobile: scroll", args);
     }
 
-    public static void scrollBackToElement(AndroidDriver driver, WebElement scroller, WebElement scrollToEl) {
+    public static void scrollBackToElement(AndroidDriver driver, RemoteWebElement scroller, RemoteWebElement scrollToEl) {
         HashMap<String, String> args = new HashMap<>();
-        args.put("elementId", scroller.toString());
-        args.put("elementToId", scrollToEl.toString());
-        driver.executeScript("mobile: scroll", args);
+        args.put("elementId", scroller.getId());
+        args.put("elementToId", scrollToEl.getId());
+        driver.executeScript("mobile: scrollBackTo", args);
     }
 
     public static ContentSize getContentSize(AppiumDriver driver, WebElement element) throws IOException {
@@ -102,6 +104,7 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
         return contentSize;
     }
 
+    @Nullable
     public static LastScrollData getLastScrollData(AppiumDriver driver) {
         Map<String, Long> scrollData = (Map<String, Long>) driver.getSessionDetail("lastScrollData");
         if (scrollData == null) {

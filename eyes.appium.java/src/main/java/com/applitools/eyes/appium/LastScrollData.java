@@ -20,4 +20,10 @@ public class LastScrollData {
         fromIndex = scrollData.get("fromIndex").intValue();
         itemCount = scrollData.get("itemCount").intValue();
     }
+
+    public String toString() {
+        return String.format("{scrollX=%s, scrollY=%s, maxScrollX=%s, maxScrollY=%s, toIndex=%s, " +
+            "fromIndex=%s, itemCount=%s}", scrollX, scrollY, maxScrollX, maxScrollY, toIndex,
+            fromIndex, itemCount);
+    }
 }

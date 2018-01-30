@@ -6,10 +6,12 @@ import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.selenium.positioning.ScrollPositionMemento;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
-import java.io.IOException;
+import java.rmi.Remote;
 import java.time.Duration;
 import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebElement;
 
 public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider {
 
@@ -18,7 +20,6 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
     private int curScrollItemIndex;
     private int numFullPages;
     private int lastScrollAmount;
-    private ContentSize scrollContentSize;
 
     public AndroidScrollPositionProvider(Logger logger, EyesAppiumDriver driver) {
         super(logger, driver);
@@ -38,21 +39,30 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         numFullPages = 1;
         lastScrollAmount = 0;
         try {
-            WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-            scrollContentSize = EyesAppiumUtils.getContentSize(driver, activeScroll);
-            int overflow = scrollContentSize.scrollableOffset;
+            ContentSize contentSize = getCachedContentSize();
+            int overflow = contentSize.scrollableOffset;
             if (overflow > 0) {
-                numFullPages += Math.floor(overflow / scrollContentSize.height);
-                lastScrollAmount = overflow - ((numFullPages - 1) * scrollContentSize.height);
+                numFullPages += Math.floor(overflow / contentSize.height);
+                lastScrollAmount = overflow - ((numFullPages - 1) * contentSize.height);
             }
         } catch (Exception e) {
             logger.verbose("Could not get first scrollable view or its contentSize");
         }
     }
 
-    protected int calcEntireContentHeight (ContentSize contentSize) {
-        logger.verbose("Content size height is " + contentSize.height + " and s.o. is " + contentSize.scrollableOffset);
-        return contentSize.height + contentSize.scrollableOffset;
+    @Override
+    public Location getScrollableViewLocation() {
+        logger.verbose("Getting the location of the scrollable view");
+        WebElement activeScroll;
+        try {
+            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+        } catch (NoSuchElementException e) {
+            return new Location(0, 0);
+        }
+        Point scrollLoc = activeScroll.getLocation();
+        Location loc = new Location(scrollLoc.x, scrollLoc.y);
+        logger.verbose("The location of the scrollable view is " + loc);
+        return loc;
     }
 
     @Override
@@ -92,7 +102,8 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         logger.log("Warning: can only scroll back to elements that have already been seen");
         try {
             WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-            EyesAppiumUtils.scrollBackToElement((AndroidDriver) driver, activeScroll, element);
+            EyesAppiumUtils.scrollBackToElement((AndroidDriver) driver, (RemoteWebElement) activeScroll,
+                (RemoteWebElement) element);
         } catch (NoSuchElementException e) {
             logger.verbose("Could not set position because there was no scrollable view; doing nothing");
         }
@@ -102,63 +113,63 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         setPosition(new Location(((ScrollPositionMemento) state).getX(), ((ScrollPositionMemento) state).getY()));
     }
 
-//    public Location scrollDown(boolean returnAbsoluteLocation) {
-//        int startX = scrollContentSize.left + (scrollContentSize.width / 2);
-//        int startY = scrollContentSize.top + scrollContentSize.height - 1;
-//        int changeX = 0;
-//        int changeY = 0;
-//        if (curScrollPageIndex + 1 < numFullPages) {
-//            // scroll a full page
-//            // TODO generalize this for horizontal scrolling too
-//            changeY = -1 * (scrollContentSize.height - scrollContentSize.touchPadding);
-//            curScrollPageIndex += 1;
-//        } else if (curScrollPageIndex + 1 == numFullPages) {
-//            // we've already scrolled all the full pages, so just scroll the last amount
-//            changeY = -1 * lastScrollAmount;
-//            curScrollPageIndex += 1;
-//        }
-//        if (changeX != 0 || changeY != 0) {
-//            TouchAction scrollAction = new TouchAction(driver);
-//            scrollAction.press(startX, startY);
-//            scrollAction.moveTo(changeX, changeY).waitAction(Duration.ofMillis(1000));
-//            scrollAction.release();
-//            driver.performTouchAction(scrollAction);
-//            curScrollPos.offset(changeX, changeY);
-//        }
-//        return curScrollPos;
-//    }
-
     public Location scrollDown(boolean returnAbsoluteLocation) {
-        if (scrollContentSize == null) {
+        if (contentSize == null) {
             logger.verbose("About to scroll but had no content size set; setting it");
             resetScrollableViewData();
         }
-        int startX = scrollContentSize.left + (scrollContentSize.width / 2);
-        int startY = scrollContentSize.top + scrollContentSize.height - scrollContentSize.touchPadding - 1;
+        // for some reason we need a bit of extra touch padding otherwise the scroll doesn't happen
+        // this number is the smallest that worked, but may not be correct for all device types
+        // and apps
+        // FIXME investigate a better option
+        int magicExtraPadding = 9;
+
+        int extraPadding = (int) (contentSize.height * 0.1);
+        int startX = contentSize.left + (contentSize.width / 2);
+        int startY = contentSize.top + contentSize.height - contentSize.touchPadding - extraPadding;
         int endX = startX;
-        int endY = scrollContentSize.top + scrollContentSize.touchPadding;
+        int endY = contentSize.top + contentSize.touchPadding + extraPadding;
 
         TouchAction scrollAction = new TouchAction(driver);
-        scrollAction.press(startX, startY).waitAction(Duration.ofMillis(1000));
+        scrollAction.press(startX, startY).waitAction(Duration.ofMillis(1500));
         scrollAction.moveTo(endX, endY);
         scrollAction.release();
         driver.performTouchAction(scrollAction);
 
+        // because Android scrollbars are visible a bit after touch, we should wait for them to
+        // disappear before handing control back to the screenshotter
+        try { Thread.sleep(750); } catch (InterruptedException ign) {}
+
         LastScrollData lastScrollData = EyesAppiumUtils.getLastScrollData(driver);
-        if (lastScrollData != null) {
-            if (lastScrollData.scrollX != -1 && lastScrollData.scrollY != -1) {
-                curScrollPos = new Location(lastScrollData.scrollX, lastScrollData.scrollY);
-                return curScrollPos;
-            } else {
-                if (lastScrollData.toIndex == curScrollItemIndex) {
-                    // if we get here, we know that the last scroll didn't do anything so we should
-                    // just return the same scroll position as last time
-                    return curScrollPos;
-                }
-            }
+        logger.verbose("After scroll lastScrollData was: " + lastScrollData);
+        if (lastScrollData == null) {
+            // if we didn't get last scroll data, it should be because we were already at the end of
+            // the scroll view, so just return the same scroll position as last time to say in effect
+            // that we did not scroll. It could also be because something goofed in Android and no
+            // scroll data was generated. In that case we're just screwed and our picture will
+            // be truncated. Unfortunately there's no way to tell the difference between the usual
+            // case and the error case so we can't provide any better feedback
+            logger.verbose("Did not get last scroll data; assume there was no more scroll");
+            return curScrollPos;
         }
-        // otherwise, fake it till you make it and just assume we scrolled exactly as much as we wanted
-        curScrollPos = curScrollPos.offset(endX - startX, endY - startY);
+
+        if (lastScrollData.scrollX != -1 && lastScrollData.scrollY != -1) {
+            // if we got scrolldata from a ScrollView (not List or Grid), actively set the scroll
+            // position with correct x/y values
+            curScrollPos = new Location(lastScrollData.scrollX, lastScrollData.scrollY);
+            return curScrollPos;
+        }
+
+
+        // otherwise, fake x/y coords by doing some math on item count and index
+        curScrollItemIndex = lastScrollData.toIndex;
+        double avgItemHeight = contentSize.scrollableOffset / lastScrollData.itemCount;
+        curScrollPos = new Location(0, (int) avgItemHeight * curScrollItemIndex);
+        logger.verbose("Did not get actual x/y coords from lastScrollData, so estimating that " +
+            "current scroll position is " + curScrollPos + ", based on item count of " +
+            lastScrollData.itemCount + ", avg item height of " + avgItemHeight + ", and scrolled-to " +
+            "index of " + curScrollItemIndex);
+
         return curScrollPos;
     }
 

@@ -3,6 +3,7 @@ package com.applitools.eyes.appium;
 import com.applitools.eyes.LogHandler;
 import com.applitools.eyes.StdoutLogHandler;
 import io.appium.java_client.MobileBy;
+import io.appium.java_client.Setting;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import java.net.URL;
@@ -14,6 +15,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
 public class AppiumAndroidFullPageScreenshotTest {
+
     public static void main(String[] args) throws Exception {
 
         // Set desired capabilities.
@@ -44,18 +46,19 @@ public class AppiumAndroidFullPageScreenshotTest {
         eyes.setLogHandler(logHandler);
         eyes.setForceFullPageScreenshot(true);
         eyes.setSaveDebugScreenshots(true);
-        eyes.setDebugScreenshotsPath("/Users/jlipps/Desktop");
+        eyes.setDebugScreenshotsPath("/Users/jlipps/Desktop/eyes-screens");
         eyes.setMatchTimeout(1000);
         eyes.setStitchOverlap(44);
 
         try {
             // Start the test.
-            eyes.open(driver, "Applitools Android Demo", "Appium Native Android with Full page screenshot");
+            eyes.open(driver, "ApiDemos", "Appium Native Android with Full page screenshot");
 
-//            WebElement scroller = driver.findElement(By.xpath("//*[@scrollable='true']"));
+            WebElement scroller = driver.findElement(By.xpath("//*[@scrollable='true']"));
             //System.out.println(scroller.getAttribute("className"));
 
 //            System.out.println(scroller.getAttribute("contentSize"));
+
 //
 
 //
@@ -89,7 +92,7 @@ public class AppiumAndroidFullPageScreenshotTest {
 //            driver.performTouchAction(scrollAction);
 //            System.out.println(firstVis.getLocation());
 
-            eyes.checkWindow("Red-blue-view-scroll");
+            eyes.checkWindow("apidemos list");
 
             // End the test.
             eyes.close();
