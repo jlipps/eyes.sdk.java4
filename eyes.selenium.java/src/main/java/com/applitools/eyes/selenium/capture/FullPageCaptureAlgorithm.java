@@ -374,6 +374,10 @@ public class FullPageCaptureAlgorithm {
         stitchedImage.getRaster().setRect(0, 0, initialPart);
         logger.verbose("Done!");
 
+        /* TODO need to determine if there is anything in the initial part which should be cut
+           off and reapplied at the bottom of the stitched image. Can do this by checking whether
+           the scrolling view has a height less than the screen height */
+
         captureAndStitchTailParts(image, stitchingOverlap, entireSize, initialPartSize);
 
         // Finally, scale the image appropriately

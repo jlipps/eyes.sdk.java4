@@ -6,7 +6,6 @@ import com.applitools.eyes.positioning.PositionMemento;
 import com.applitools.eyes.selenium.positioning.ScrollPositionMemento;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
-import java.rmi.Remote;
 import java.time.Duration;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
@@ -16,59 +15,40 @@ import org.openqa.selenium.remote.RemoteWebElement;
 public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider {
 
     private Location curScrollPos;
-    private int curScrollPageIndex;
-    private int curScrollItemIndex;
-    private int numFullPages;
-    private int lastScrollAmount;
+    private Location scrollableViewLoc;
 
     public AndroidScrollPositionProvider(Logger logger, EyesAppiumDriver driver) {
         super(logger, driver);
-        resetScrollTracking();
-    }
-
-    private void resetScrollTracking() {
-        logger.verbose("Resetting current scroll position and current scroll page");
-        // unfortunately we have to assume that the current scroll position of the main scroll view
-        // starts at 0, 0; there is no way to get the current scroll position accurately from android
-        curScrollPos = new Location(0, 0);
-        curScrollPageIndex = 0;
-    }
-
-    private void resetScrollableViewData() {
-        logger.verbose("Resetting scrollable view data based on first scrollable view");
-        numFullPages = 1;
-        lastScrollAmount = 0;
-        try {
-            ContentSize contentSize = getCachedContentSize();
-            int overflow = contentSize.scrollableOffset;
-            if (overflow > 0) {
-                numFullPages += Math.floor(overflow / contentSize.height);
-                lastScrollAmount = overflow - ((numFullPages - 1) * contentSize.height);
-            }
-        } catch (Exception e) {
-            logger.verbose("Could not get first scrollable view or its contentSize");
-        }
     }
 
     @Override
     public Location getScrollableViewLocation() {
         logger.verbose("Getting the location of the scrollable view");
-        WebElement activeScroll;
-        try {
-            activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
-        } catch (NoSuchElementException e) {
-            return new Location(0, 0);
+        if (scrollableViewLoc == null) {
+            WebElement activeScroll;
+            try {
+                activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
+            } catch (NoSuchElementException e) {
+                return new Location(0, 0);
+            }
+            Point scrollLoc = activeScroll.getLocation();
+            scrollableViewLoc = new Location(scrollLoc.x, scrollLoc.y);
         }
-        Point scrollLoc = activeScroll.getLocation();
-        Location loc = new Location(scrollLoc.x, scrollLoc.y);
-        logger.verbose("The location of the scrollable view is " + loc);
-        return loc;
+        logger.verbose("The location of the scrollable view is " + scrollableViewLoc);
+        return scrollableViewLoc;
     }
 
     @Override
     public Location getCurrentPosition(boolean absolute) {
         logger.verbose("AndroidScrollPositionProvider - getCurrentPosition()");
         Location loc = getScrollableViewLocation();
+        if (curScrollPos == null) {
+            logger.verbose("There was no current scroll position registered, so setting it for the first time");
+            ContentSize contentSize = getCachedContentSize();
+            LastScrollData scrollData = EyesAppiumUtils.getLastScrollData(driver);
+            logger.verbose("Last scroll data from the server was: " + scrollData);
+            curScrollPos = getScrollPosFromScrollData(contentSize, scrollData);
+        }
         Location pos;
         if (absolute) {
             pos = new Location(loc.getX() + curScrollPos.getX(), loc.getY() + curScrollPos.getY());
@@ -84,18 +64,23 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             logger.log("Warning: tried to set position on an Android scroll view, which is not possible");
             return;
         }
-        // if we set the position to [0, 0], then take that as a sign that we should reset curScrollPos
-        // and curScrollPageIndex, and trigger a refresh of contentSize
+
         if (location.getY() == curScrollPos.getY() && location.getX() == curScrollPos.getX()) {
             logger.log("Already at the desired position, doing nothing");
             return;
         } else {
             logger.verbose(
-                "Setting position to 0, 0 by scrolling all the way back to the first visible element");
-            setPosition(getCachedFirstVisibleChild());
+                "Setting position to 0, 0 by scrolling all the way back to the top");
+            Location lastScrollPos = curScrollPos;
+            while (curScrollPos.getY() > 0) {
+                scroll(false);
+                if (lastScrollPos.getY() == curScrollPos.getY()) {
+                    // if we wound up in the same place after a scroll, abort
+                    break;
+                }
+                lastScrollPos = curScrollPos;
+            }
         }
-        resetScrollTracking();
-        resetScrollableViewData();
     }
 
     public void setPosition(WebElement element) {
@@ -104,6 +89,10 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             WebElement activeScroll = EyesAppiumUtils.getFirstScrollableView(driver);
             EyesAppiumUtils.scrollBackToElement((AndroidDriver) driver, (RemoteWebElement) activeScroll,
                 (RemoteWebElement) element);
+
+            LastScrollData lastScrollData = EyesAppiumUtils.getLastScrollData(driver);
+            logger.verbose("After scrolling back to first child, lastScrollData was: " + lastScrollData);
+            curScrollPos = new Location(lastScrollData.scrollX, lastScrollData.scrollY);
         } catch (NoSuchElementException e) {
             logger.verbose("Could not set position because there was no scrollable view; doing nothing");
         }
@@ -113,22 +102,20 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         setPosition(new Location(((ScrollPositionMemento) state).getX(), ((ScrollPositionMemento) state).getY()));
     }
 
-    public Location scrollDown(boolean returnAbsoluteLocation) {
-        if (contentSize == null) {
-            logger.verbose("About to scroll but had no content size set; setting it");
-            resetScrollableViewData();
-        }
-        // for some reason we need a bit of extra touch padding otherwise the scroll doesn't happen
-        // this number is the smallest that worked, but may not be correct for all device types
-        // and apps
-        // FIXME investigate a better option
-        int magicExtraPadding = 9;
-
-        int extraPadding = (int) (contentSize.height * 0.1);
+    private void scroll(boolean isDown) {
+        ContentSize contentSize = getCachedContentSize();
+        int extraPadding = (int) (contentSize.height * 0.15); // scroll less than the max
         int startX = contentSize.left + (contentSize.width / 2);
         int startY = contentSize.top + contentSize.height - contentSize.touchPadding - extraPadding;
         int endX = startX;
         int endY = contentSize.top + contentSize.touchPadding + extraPadding;
+
+        // if we're scrolling up, just switch the Y vars
+        if (!isDown) {
+            int temp = endY;
+            endY = startY;
+            startY = temp;
+        }
 
         TouchAction scrollAction = new TouchAction(driver);
         scrollAction.press(startX, startY).waitAction(Duration.ofMillis(1500));
@@ -142,7 +129,18 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
 
         LastScrollData lastScrollData = EyesAppiumUtils.getLastScrollData(driver);
         logger.verbose("After scroll lastScrollData was: " + lastScrollData);
-        if (lastScrollData == null) {
+        curScrollPos = getScrollPosFromScrollData(contentSize, lastScrollData);
+    }
+
+    public Location scrollDown(boolean returnAbsoluteLocation) {
+        scroll(true);
+        return getCurrentPosition(returnAbsoluteLocation);
+    }
+
+    private Location getScrollPosFromScrollData(ContentSize contentSize, LastScrollData scrollData) {
+        logger.verbose("Getting scroll position from last scroll data (" + scrollData + ") and " +
+            "contentSize (" + contentSize + ")");
+        if (scrollData == null) {
             // if we didn't get last scroll data, it should be because we were already at the end of
             // the scroll view, so just return the same scroll position as last time to say in effect
             // that we did not scroll. It could also be because something goofed in Android and no
@@ -153,24 +151,20 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             return curScrollPos;
         }
 
-        if (lastScrollData.scrollX != -1 && lastScrollData.scrollY != -1) {
+        if (scrollData.scrollX != -1 && scrollData.scrollY != -1) {
             // if we got scrolldata from a ScrollView (not List or Grid), actively set the scroll
             // position with correct x/y values
-            curScrollPos = new Location(lastScrollData.scrollX, lastScrollData.scrollY);
-            return curScrollPos;
+            return new Location(scrollData.scrollX, scrollData.scrollY);
         }
 
-
         // otherwise, fake x/y coords by doing some math on item count and index
-        curScrollItemIndex = lastScrollData.toIndex;
-        double avgItemHeight = contentSize.scrollableOffset / lastScrollData.itemCount;
-        curScrollPos = new Location(0, (int) avgItemHeight * curScrollItemIndex);
+        double avgItemHeight = contentSize.scrollableOffset / scrollData.itemCount;
+        Location pos = new Location(0, (int) avgItemHeight * scrollData.toIndex);
         logger.verbose("Did not get actual x/y coords from lastScrollData, so estimating that " +
-            "current scroll position is " + curScrollPos + ", based on item count of " +
-            lastScrollData.itemCount + ", avg item height of " + avgItemHeight + ", and scrolled-to " +
-            "index of " + curScrollItemIndex);
-
-        return curScrollPos;
+            "current scroll position is " + pos + ", based on item count of " +
+            scrollData.itemCount + ", avg item height of " + avgItemHeight + ", and scrolled-to " +
+            "index of " + scrollData.toIndex);
+        return pos;
     }
 
 }

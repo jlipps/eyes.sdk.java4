@@ -48,7 +48,7 @@ public class AppiumAndroidFullPageScreenshotTest {
         eyes.setSaveDebugScreenshots(true);
         eyes.setDebugScreenshotsPath("/Users/jlipps/Desktop/eyes-screens");
         eyes.setMatchTimeout(1000);
-        eyes.setStitchOverlap(44);
+//        eyes.setStitchOverlap(44);
 
         try {
             // Start the test.
