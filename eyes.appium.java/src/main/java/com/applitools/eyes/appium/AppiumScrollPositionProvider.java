@@ -149,13 +149,13 @@ public abstract class AppiumScrollPositionProvider implements SeleniumScrollingP
         try {
             int windowHeight = driver.manage().window().getSize().getHeight();
             ContentSize contentSize = getCachedContentSize();
-            int scrollContentHeight = contentSize.scrollableOffset;
+            int scrollContentHeight = contentSize.getScrollContentHeight();
             int outsideScrollviewHeight = windowHeight - contentSize.height;
             RectangleSize result = new RectangleSize(contentSize.width,
                 scrollContentHeight + outsideScrollviewHeight + verticalScrollGap);
             logger.verbose("AppiumScrollPositionProvider - Entire size: " + result + " (Accounting for " +
-                "a vertical scroll gap of " + verticalScrollGap + ", with a scrollable offset of " +
-                contentSize.scrollableOffset + ")");
+                "a vertical scroll gap of " + verticalScrollGap + ", with a scroll content height of " +
+                scrollContentHeight + ")");
             return result;
         } catch (NoSuchElementException e) {
             logger.verbose("Could not retrieve the first scrollable view, looks like there isn't one. " +

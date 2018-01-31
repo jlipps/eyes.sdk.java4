@@ -47,7 +47,7 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             ContentSize contentSize = getCachedContentSize();
             LastScrollData scrollData = EyesAppiumUtils.getLastScrollData(driver);
             logger.verbose("Last scroll data from the server was: " + scrollData);
-            curScrollPos = getScrollPosFromScrollData(contentSize, scrollData);
+            curScrollPos = getScrollPosFromScrollData(contentSize, scrollData, 0, false);
         }
         Location pos;
         if (absolute) {
@@ -104,7 +104,7 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
 
     private void scroll(boolean isDown) {
         ContentSize contentSize = getCachedContentSize();
-        int extraPadding = (int) (contentSize.height * 0.15); // scroll less than the max
+        int extraPadding = (int) (contentSize.height * 0.1); // scroll 10% less than the max
         int startX = contentSize.left + (contentSize.width / 2);
         int startY = contentSize.top + contentSize.height - contentSize.touchPadding - extraPadding;
         int endX = startX;
@@ -116,6 +116,8 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
             endY = startY;
             startY = temp;
         }
+
+        int supposedScrollAmt = startY - endY; // how much we will scroll if we don't hit a barrier
 
         TouchAction scrollAction = new TouchAction(driver);
         scrollAction.press(startX, startY).waitAction(Duration.ofMillis(1500));
@@ -129,7 +131,7 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
 
         LastScrollData lastScrollData = EyesAppiumUtils.getLastScrollData(driver);
         logger.verbose("After scroll lastScrollData was: " + lastScrollData);
-        curScrollPos = getScrollPosFromScrollData(contentSize, lastScrollData);
+        curScrollPos = getScrollPosFromScrollData(contentSize, lastScrollData, supposedScrollAmt, isDown);
     }
 
     public Location scrollDown(boolean returnAbsoluteLocation) {
@@ -137,34 +139,61 @@ public class AndroidScrollPositionProvider extends AppiumScrollPositionProvider 
         return getCurrentPosition(returnAbsoluteLocation);
     }
 
-    private Location getScrollPosFromScrollData(ContentSize contentSize, LastScrollData scrollData) {
+    private Location getScrollPosFromScrollData(ContentSize contentSize, LastScrollData scrollData, int supposedScrollAmt, boolean isDown) {
         logger.verbose("Getting scroll position from last scroll data (" + scrollData + ") and " +
             "contentSize (" + contentSize + ")");
+
+        // if we didn't get last scroll data, it should be because we were already at the end of
+        // the scroll view. This means, unfortunately, we don't have any data about how much
+        // we had to scroll to reach the end. So let's make it up based on the contentSize
         if (scrollData == null) {
-            // if we didn't get last scroll data, it should be because we were already at the end of
-            // the scroll view, so just return the same scroll position as last time to say in effect
-            // that we did not scroll. It could also be because something goofed in Android and no
-            // scroll data was generated. In that case we're just screwed and our picture will
-            // be truncated. Unfortunately there's no way to tell the difference between the usual
-            // case and the error case so we can't provide any better feedback
             logger.verbose("Did not get last scroll data; assume there was no more scroll");
-            return curScrollPos;
+            if (isDown) {
+                logger.verbose(
+                    "Since we're scrolling down, setting Y location to the last page of the scrollableOffset");
+                return new Location(curScrollPos.getX(),
+                    contentSize.scrollableOffset);
+            }
+
+            logger.verbose("Since we're scrolling up, just say we reached 0, 0");
+            return new Location(curScrollPos.getX(), 0);
         }
 
+        // if we got scrolldata from a ScrollView (not List or Grid), actively set the scroll
+        // position with correct x/y values
         if (scrollData.scrollX != -1 && scrollData.scrollY != -1) {
-            // if we got scrolldata from a ScrollView (not List or Grid), actively set the scroll
-            // position with correct x/y values
+            logger.verbose("Setting scroll position based on pixel values from scroll data");
             return new Location(scrollData.scrollX, scrollData.scrollY);
         }
 
-        // otherwise, fake x/y coords by doing some math on item count and index
-        double avgItemHeight = contentSize.scrollableOffset / scrollData.itemCount;
-        Location pos = new Location(0, (int) avgItemHeight * scrollData.toIndex);
-        logger.verbose("Did not get actual x/y coords from lastScrollData, so estimating that " +
-            "current scroll position is " + pos + ", based on item count of " +
-            scrollData.itemCount + ", avg item height of " + avgItemHeight + ", and scrolled-to " +
-            "index of " + scrollData.toIndex);
-        return pos;
+        // otherwise, if we already have a scroll position, just assume we scrolled exactly as much
+        // as the touchaction was supposed to. unfortunately it's not really that simple, because we
+        // might think we scrolled a full page but we hit a barrier and only scrolled a bit. so take
+        // a peek at the fromIndex of the scrolldata; if the position based on the fromIndex is
+        // wildly different than what we thought we scrolled, go with the fromIndex-based position
+
+        // we really need the number of items per row to do this math correctly.
+        // since we don't have that, just use the average item height, which means we might get
+        // part-rows for gridviews that have multiple items per row
+        double avgItemHeight = contentSize.getScrollContentHeight() / scrollData.itemCount;
+        int curYPos = curScrollPos == null ? 0 : curScrollPos.getY();
+        int yPosByIndex = (int) avgItemHeight * scrollData.fromIndex;
+        int yPosByAssumption = curYPos + supposedScrollAmt;
+        int newYPos;
+        logger.verbose("By assumption we are now at " + yPosByAssumption + " pixels, and by item " +
+            "index we are now at " + yPosByIndex + " pixels");
+        if (((double) Math.abs(yPosByAssumption - yPosByIndex) / contentSize.height) > 0.1) {
+            // if the difference is more than 10% of the view height, go with index-based
+            newYPos = yPosByIndex;
+            logger.verbose("Estimating that current scroll Y position is " + newYPos + ", based on item count of " +
+                scrollData.itemCount + ", avg item height of " + avgItemHeight + ", and scrolled-to " +
+                "fromIndex of " + scrollData.fromIndex);
+        } else {
+            newYPos = yPosByAssumption;
+            logger.verbose("Assuming we scrolled down exactly " + supposedScrollAmt + " pixels");
+        }
+
+        return new Location(curScrollPos == null ? 0 : curScrollPos.getX(), newYPos);
     }
 
 }

@@ -25,9 +25,9 @@ public class AppiumAndroidFullPageScreenshotTest {
         capabilities.setCapability("deviceName", "Android Emulator");
         capabilities.setCapability("platformVersion", "8.1");
         // TODO do not merge until this is replaced with a non-user-specific path
-        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/Applitools-Android-Demo.apk");
-//        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/ApiDemos-debug.apk");
-//        capabilities.setCapability("appPackage", "io.appium.android.apis");
+//        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/Applitools-Android-Demo.apk");
+        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/ApiDemos-debug.apk");
+        capabilities.setCapability("appPackage", "io.appium.android.apis");
 //        capabilities.setCapability("appActivity", "io.appium.android.apis.view.Grid2");
 //        capabilities.setCapability("appActivity", "io.appium.android.apis.view.List1");
         capabilities.setCapability("automationName", "UiAutomator2");
@@ -54,7 +54,9 @@ public class AppiumAndroidFullPageScreenshotTest {
             // Start the test.
             eyes.open(driver, "ApiDemos", "Appium Native Android with Full page screenshot");
 
-            WebElement scroller = driver.findElement(By.xpath("//*[@scrollable='true']"));
+            driver.findElement(MobileBy.AccessibilityId("Graphics")).click();
+
+//            WebElement scroller = driver.findElement(By.xpath("//*[@scrollable='true']"));
             //System.out.println(scroller.getAttribute("className"));
 
 //            System.out.println(scroller.getAttribute("contentSize"));
@@ -92,7 +94,7 @@ public class AppiumAndroidFullPageScreenshotTest {
 //            driver.performTouchAction(scrollAction);
 //            System.out.println(firstVis.getLocation());
 
-            eyes.checkWindow("apidemos list");
+            eyes.checkWindow("graphics");
 
             // End the test.
             eyes.close();

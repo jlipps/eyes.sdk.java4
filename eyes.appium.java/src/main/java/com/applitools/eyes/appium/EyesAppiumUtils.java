@@ -98,9 +98,11 @@ public class EyesAppiumUtils extends EyesSeleniumUtils{
 
     public static ContentSize getContentSize(AppiumDriver driver, WebElement element) throws IOException {
         String contentSizeJson = element.getAttribute("contentSize");
+        driver.getClass();
         ContentSize contentSize;
         ObjectMapper objectMapper = new ObjectMapper();
         contentSize = objectMapper.readValue(contentSizeJson, ContentSize.class);
+        contentSize.setDriver(driver);
         return contentSize;
     }
 
