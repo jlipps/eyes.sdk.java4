@@ -25,11 +25,7 @@ public class AppiumAndroidFullPageScreenshotTest {
         capabilities.setCapability("deviceName", "Android Emulator");
         capabilities.setCapability("platformVersion", "8.1");
         // TODO do not merge until this is replaced with a non-user-specific path
-//        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/Applitools-Android-Demo.apk");
-        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/ApiDemos-debug.apk");
-        capabilities.setCapability("appPackage", "io.appium.android.apis");
-//        capabilities.setCapability("appActivity", "io.appium.android.apis.view.Grid2");
-//        capabilities.setCapability("appActivity", "io.appium.android.apis.view.List1");
+        capabilities.setCapability("app", "/Users/jlipps/Code/testapps/Applitools-Android-Demo.apk");
         capabilities.setCapability("automationName", "UiAutomator2");
         capabilities.setCapability("newCommandTimeout", 300);
 
@@ -46,55 +42,13 @@ public class AppiumAndroidFullPageScreenshotTest {
         eyes.setLogHandler(logHandler);
         eyes.setForceFullPageScreenshot(true);
         eyes.setSaveDebugScreenshots(true);
-        eyes.setDebugScreenshotsPath("/Users/jlipps/Desktop/eyes-screens");
         eyes.setMatchTimeout(1000);
-//        eyes.setStitchOverlap(44);
 
         try {
             // Start the test.
-            eyes.open(driver, "ApiDemos", "Appium Native Android with Full page screenshot");
+            eyes.open(driver, "Applitools Demo", "Appium Native Android with Full page screenshot");
 
-            driver.findElement(MobileBy.AccessibilityId("Graphics")).click();
-
-//            WebElement scroller = driver.findElement(By.xpath("//*[@scrollable='true']"));
-            //System.out.println(scroller.getAttribute("className"));
-
-//            System.out.println(scroller.getAttribute("contentSize"));
-
-//
-
-//
-//            TouchAction scrollAction = new TouchAction(driver);
-//            scrollAction.press(500, 1800).waitAction(Duration.ofMillis(1000));
-//            scrollAction.moveTo(500, 600);//.waitAction(Duration.ofMillis(2500));
-//            scrollAction.release();
-//            driver.performTouchAction(scrollAction);
-//
-//
-//            Thread.sleep(2000);
-//            System.out.println(scroller.getAttribute("contentSize"));
-//
-//            scrollAction = new TouchAction(driver);
-//            scrollAction.press(500, 600).waitAction(Duration.ofMillis((1000)));
-//            scrollAction.moveTo(500, 1800);//.waitAction(Duration.ofMillis((2500)));
-//            scrollAction.release();
-//            driver.performTouchAction(scrollAction);
-//
-//            Thread.sleep(2000);
-//            System.out.println(scroller.getAttribute("contentSize"));
-//            System.out.println(driver.getSessionDetail("lastScrollData"));
-
-//            WebElement scroller = driver.findElement(MobileBy.xpath("//*[@scrollable='true']"));
-//            WebElement firstVis = scroller.findElement(MobileBy.xpath("/*[@firstVisible='true']"));
-//            System.out.println(firstVis.getLocation());
-//            TouchAction scrollAction = new TouchAction(driver);
-//            scrollAction.press(50, 1200).waitAction(Duration.ofMillis(2500));
-//            scrollAction.moveTo(0, 600);
-//            scrollAction.release();
-//            driver.performTouchAction(scrollAction);
-//            System.out.println(firstVis.getLocation());
-
-            eyes.checkWindow("graphics");
+            eyes.checkWindow("scroll");
 
             // End the test.
             eyes.close();
